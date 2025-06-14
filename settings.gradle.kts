@@ -1,1 +1,1 @@
-rootProject.name = "spigot_1.8_template"
+rootProject.name = "MemoriaCore"

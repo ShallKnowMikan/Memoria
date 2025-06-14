@@ -55,6 +55,6 @@ dependencies {
 
 tasks.named("build"){
     dependsOn(tasks.named("shadowJar"))
-//    finalizedBy("copy")
+    finalizedBy("copy")
 
 }
