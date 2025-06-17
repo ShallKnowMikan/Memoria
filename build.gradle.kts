@@ -6,7 +6,7 @@ plugins {
 group = "dev.mikan"
 version = "1.0"
 
-val outputDir = file("/home/mikan/Desktop/builds")
+val outputDir = file("/home/mikan/Desktop/localhosts/MemoriaTest/plugins")
 
 tasks.register<Copy>("copy"){
     dependsOn(tasks.named("jar"))
@@ -51,6 +51,13 @@ dependencies {
     // Packet events
     compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
     implementation("dev.mikan:AltairKit:1.8.8")
+
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("org.slf4j:slf4j-simple:2.0.13")
+
+    // Hikari
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.xerial:sqlite-jdbc:3.45.1.0")
 }
 
 tasks.named("build"){
