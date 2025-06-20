@@ -26,15 +26,18 @@ public class SQLiteManager {
     private final Map<Class<?>, ObjectAdapter<?>> adapters;
     private ConnectionPool pool;
     private ExecutorService executor;
+    private final String dbName;
 
-    public SQLiteManager(Logger logger) {
+    public SQLiteManager(Logger logger,String dbName) {
         this.logger = logger;
         this.adapters = new HashMap<>();
         this.adapters.put(ItemStack[].class, new InventoryAdapter());
+        this.dbName = dbName;
+        this.init();
     }
 
     public void init() {
-        ConnectionPool newPool = new SQLiteConnectionPool();
+        ConnectionPool newPool = new SQLiteConnectionPool(dbName);
         if (newPool.setup()) {
             this.shutdown();
             this.pool = newPool;

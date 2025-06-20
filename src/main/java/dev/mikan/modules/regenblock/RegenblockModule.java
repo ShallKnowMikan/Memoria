@@ -18,6 +18,11 @@ public class RegenblockModule extends Module {
     }
 
     @Override
+    public void onReload() {
+
+    }
+
+    @Override
     public void onDisable() {
 
     }

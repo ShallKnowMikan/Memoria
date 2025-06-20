@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.mikan"
-version = "1.0"
+version = "3.1"
 
 val outputDir = file("/home/mikan/Desktop/localhosts/MemoriaTest/plugins")
 
@@ -32,6 +32,7 @@ repositories {
     mavenCentral()
     flatDir {
         dirs ("/home/mikan/.m2/repository/dev/mikan/AltairKit/1.8.8")
+        dirs ("/home/mikan/.m2/repository/com/massivecraft/FactionUUID/1.8.8")
     }
 
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
@@ -40,6 +41,10 @@ repositories {
     maven {
         name = "sonatype"
         url = uri("https://oss.sonatype.org/content/groups/public/")
+    }
+    maven {
+        name = "jitpack.io"
+        url = uri("https://jitpack.io")
     }
 }
 
@@ -56,8 +61,12 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.13")
 
     // Hikari
-    implementation("com.zaxxer:HikariCP:5.1.0")
-    implementation("org.xerial:sqlite-jdbc:3.45.1.0")
+    implementation("com.zaxxer:HikariCP:6.3.0")
+    implementation("org.xerial:sqlite-jdbc:3.50.1.0")
+
+    // Factions
+    compileOnly("com.massivecraft:FactionUUID:1.8.8@jar")
+
 }
 
 tasks.named("build"){

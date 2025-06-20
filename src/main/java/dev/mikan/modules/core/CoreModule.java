@@ -19,6 +19,11 @@ public final class CoreModule extends Module {
     }
 
     @Override
+    public void onReload() {
+
+    }
+
+    @Override
     public void onDisable() {
 
     }

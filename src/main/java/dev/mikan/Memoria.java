@@ -3,6 +3,7 @@ package dev.mikan;
 
 import dev.mikan.altairkit.api.yml.ConfigManager;
 import dev.mikan.altairkit.utils.Module;
+import dev.mikan.altairkit.utils.Singleton;
 import dev.mikan.modules.core.CoreModule;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.regenblock.RegenblockModule;
@@ -35,9 +36,9 @@ public class Memoria {
         this.lang = configManager.get("lang.yml");
 
         modules = Set.of(
-                new FactionModule(this,"Faction", logger),
-                new CoreModule(this,"Core",logger),
-                new RegenblockModule(this,"RegenBlock",logger)
+                Singleton.getInstance(FactionModule.class,() -> new FactionModule(this,"Faction", logger)),
+                Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core",logger)),
+                Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger))
                 );
 
 
