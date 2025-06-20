@@ -5,9 +5,13 @@ import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.Module;
 import dev.mikan.altairkit.utils.Singleton;
 import dev.mikan.commands.FactionCommands;
+import dev.mikan.commands.MemoriaCommands;
 import dev.mikan.database.SQLiteManager;
 import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.listeners.FactionsListeners;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 
@@ -20,6 +24,8 @@ public final class FactionModule extends Module implements Singleton {
 
     private final Memoria plugin;
     private final FactionsDB database;
+
+    private @Getter FileConfiguration config;
 
     public FactionModule(Memoria plugin, String name, Logger logger) {
         super(plugin.getBootstrap(), name, logger);
@@ -37,6 +43,7 @@ public final class FactionModule extends Module implements Singleton {
     @Override
     public void onReload() {
         loadConfig();
+        info("Reloaded.");
     }
 
     @Override
@@ -44,15 +51,20 @@ public final class FactionModule extends Module implements Singleton {
 
     }
 
-    @Override
+    @Override @SneakyThrows
     public void loadConfig() {
         database.setup();
         database.loadFactions();
+
+        plugin.getConfigManager().load("modules/factions.yml",plugin.getBootstrap().getResource("modules/factions.yml"));
+        config = plugin.getConfigManager().get("modules/factions.yml");
     }
 
     @Override
     public void registerCommands(Plugin plugin) {
         AltairKit.registerCommands(new FactionCommands());
+        AltairKit.registerCommands(new MemoriaCommands(this.plugin));
+        AltairKit.tabComplete("memoria reload",this.plugin.getModules().keySet().toArray(new String[0]));
     }
 
     @Override

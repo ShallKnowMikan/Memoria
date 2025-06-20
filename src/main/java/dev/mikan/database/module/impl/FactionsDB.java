@@ -42,6 +42,7 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
                     role VARCHAR(32) DEFAULT %role%,
                     victories INT DEFAULT 0,
                     defeats INT DEFAULT 0,
+                    nextState VARCHAR(24) DEFAULT NULL,
                     opponentId INT DEFAULT NULL,
                     FOREIGN KEY(opponentId) REFERENCES Factions(id)
                 )
@@ -92,6 +93,7 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
         final String query = "DELETE FROM Factions WHERE id = ?";
         this.sql.updateAsync(query,id)
                 .whenComplete((success,error) -> {
+                    MFaction.MFactions.destruct(id);
                     final String message = success ? "deleted successfully." : "error while deleting.";
                     FactionModule.instance().info("Faction: {} -> {}",id,message);
                 });

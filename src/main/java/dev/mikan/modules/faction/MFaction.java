@@ -32,6 +32,11 @@ public final class MFaction {
         this.bombers = bombers;
     }
 
+    @Override
+    public String toString() {
+        return String.valueOf(this.getId());
+    }
+
     /*
     * TODO: check if factions like warzone and wildernes will be stored
     *  into the database one created
@@ -59,6 +64,10 @@ public final class MFaction {
 
         public static MFaction getByPlayer(Player player){
             return factions.get(Integer.parseInt(FPlayers.getInstance().getByPlayer(player).getFactionId()));
+        }
+
+        public static void destruct(int id){
+            factions.remove(id);
         }
     }
 

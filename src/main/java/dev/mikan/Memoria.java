@@ -1,6 +1,7 @@
 package dev.mikan;
 
 
+import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.api.yml.ConfigManager;
 import dev.mikan.altairkit.utils.Module;
 import dev.mikan.altairkit.utils.Singleton;
@@ -14,7 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Memoria {
 
@@ -24,7 +26,7 @@ public class Memoria {
     private @Getter final FileConfiguration lang;
     private @Getter final FileConfiguration general;
 
-    private @Getter final Set<? extends Module> modules;
+    private @Getter final Map<String,Module> modules = new ConcurrentHashMap<>();
 
     public Memoria(Bootstrap bootstrap) {
 
@@ -35,12 +37,11 @@ public class Memoria {
         this.general = configManager.get("general.yml");
         this.lang = configManager.get("lang.yml");
 
-        modules = Set.of(
-                Singleton.getInstance(FactionModule.class,() -> new FactionModule(this,"Faction", logger)),
-                Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core",logger)),
-                Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger))
-                );
+        AltairKit.enableGUIManager(this.bootstrap);
 
+        modules.put("faction",Singleton.getInstance(FactionModule.class,() -> new FactionModule(this,"Faction", logger)));
+        modules.put("core",Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core",logger)));
+        modules.put("regenblock",Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger)));
 
         loadFiles();
 
@@ -57,9 +58,7 @@ public class Memoria {
 
     // Loads every module
     private void loadModules(){
-        for (Module module : modules) {
-            module.onEnable();
-        }
+        modules.values().forEach(Module::onEnable);
     }
 
 }
