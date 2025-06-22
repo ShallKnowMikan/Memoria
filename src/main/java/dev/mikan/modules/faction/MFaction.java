@@ -3,8 +3,11 @@ package dev.mikan.modules.faction;
 import com.massivecraft.factions.FPlayer;
 import com.massivecraft.factions.FPlayers;
 import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.Factions;
 import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.events.GraceStartEvent;
+import dev.mikan.events.PeaceStartEvent;
 import dev.mikan.events.RaidStartEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,7 +71,10 @@ public final class MFaction {
         return "";
     }
 
-
+    public int maxBombers(){
+        int members = Factions.getInstance().getFactionById(String.valueOf(id)).getFPlayers().size();
+        return (members / 100 * 15) + 3;
+    }
 
     /*
     * TODO: check if factions like warzone and wildernes will be stored
@@ -106,6 +112,11 @@ public final class MFaction {
             return factions.get(Integer.parseInt(FPlayers.getInstance().getByPlayer(player).getFactionId()));
         }
 
+        public MFaction getByName(String name){
+            Faction faction = Factions.getInstance().getByTag(name);
+            return faction != null ? factions.get(Integer.parseInt(faction.getId())) : null;
+        }
+
         public MFaction getById(int id){
             return factions.get(id);
         }
@@ -119,6 +130,19 @@ public final class MFaction {
             Bukkit.getPluginManager().callEvent(event);
             event.run();
         }
+
+        public void startGrace(MFaction attackingFaction,MFaction defendingFaction){
+            GraceStartEvent event = new GraceStartEvent(attackingFaction,defendingFaction,FactionModule.instance().getPlugin());
+            Bukkit.getPluginManager().callEvent(event);
+            event.run();
+        }
+
+        public void startPeace(MFaction faction){
+            PeaceStartEvent event = new PeaceStartEvent(faction,FactionModule.instance().getPlugin());
+            Bukkit.getPluginManager().callEvent(event);
+            event.run();
+        }
+
 
         // Reset raid role,state and opponent id
         // If in raid state will do it for opponent as well (raidTasksCache included)

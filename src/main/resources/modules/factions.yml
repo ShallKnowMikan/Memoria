@@ -4,9 +4,36 @@
 #██║╚██╔╝██║██╔══╝░░██║╚██╔╝██║██║░░██║██╔══██╗██║██╔══██║
 #██║░╚═╝░██║███████╗██║░╚═╝░██║╚█████╔╝██║░░██║██║██║░░██║
 #╚═╝░░░░░╚═╝╚══════╝╚═╝░░░░░╚═╝░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝
-
+curfew: ''
+cmd:
+  data:
+    peace:
+      - '&8&m--------------------------------------'
+      - '&f◆ &2&lPeace info&7:'
+      - '&f  ┃ &7Dati della fazione: &a%faction%'
+      - '&f  ┃ &7Stato: %state%'
+      - '&f  ┃ &7Membri online: &f%online-members%'
+      - '&f  ┃ &7Bombardieri online: &f%online-bombers%'
+      - '&f  ┃ &7Numero massimo di bombardieri: &f%max-bombers%'
+      - '&8&m--------------------------------------'
+    raid:
+      - '&8&m--------------------------------------'
+      - '&f◆ &4&lRaid info&7:'
+      - '&f  ┃ &7Dati della fazione: &c%faction%'
+      - '&f  ┃ &7Stato: %state%'
+      - '&f  ┃ &7Orario fine raid: %time%'
+      - '&f  ┃ &7Tempo rimanente: %time-left%'
+      - '&8&m--------------------------------------'
+    grace:
+      - '&8&m--------------------------------------'
+      - '&f◆ &5&lGrace info&7:'
+      - '&f  ┃ &7Dati della fazione: &a%faction%'
+      - '&f  ┃ &7Stato: %state%'
+      - '&f  ┃ &7Giorno e orario fine grace: %time%'
+      - '&f  ┃ &7Tempo rimanente: %time-left%'
+      - '&8&m--------------------------------------'
 gui:
-  raid-proposal:
+  raid_proposal:
     title: '&7Vuoi attaccare &b&n%faction%&7?'
     size: 27
     items:

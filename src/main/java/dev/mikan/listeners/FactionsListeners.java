@@ -9,6 +9,8 @@ import com.massivecraft.factions.event.FactionDisbandEvent;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.NBTUtils;
 import dev.mikan.altairkit.utils.NmsUtils;
+import dev.mikan.altairkit.utils.TimeUtils;
+import dev.mikan.commands.FactionCommands;
 import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.events.ChunkJoinEvent;
 import dev.mikan.gui.RaidProposalGUI;
@@ -22,18 +24,13 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
-import java.util.Set;
-
 public class FactionsListeners implements Listener {
 
     private final FactionsDB database;
     private final FactionModule module;
     private final FileConfiguration factionConfig;
 
-    public final static String F_CMD_FAKE_ROOT = "emmikanquelloreal";
-    private final static Set<String> F_COMMANDS = Set.of(
-            "bombers"
-    );
+
 
     public FactionsListeners(FactionsDB database) {
         this.database = database;
@@ -64,9 +61,9 @@ public class FactionsListeners implements Listener {
     @EventHandler public void onFCommand(PlayerCommandPreprocessEvent e){
         if (!e.getMessage().startsWith("/f")
                 || !(e.getMessage().split(" ").length >= 2
-                    && F_COMMANDS.contains(e.getMessage().split(" ")[1].toLowerCase()))) return;
+                    && FactionCommands.F_COMMANDS.contains(e.getMessage().split(" ")[1].toLowerCase()))) return;
 
-        String command = e.getMessage().replaceFirst("f",F_CMD_FAKE_ROOT).substring(1);
+        String command = e.getMessage().replaceFirst("f", FactionCommands.F_CMD_FAKE_ROOT).substring(1);
         e.setCancelled(true);
         e.getPlayer().performCommand(command);
     }
@@ -109,23 +106,29 @@ public class FactionsListeners implements Listener {
 
 
         MFaction playersFaction = MFaction.MFactions.getByPlayer(e.getFPlayer());
-
+        MFaction factionTo = MFaction.MFactions.getByFaction(e.getFactionTo());
         if (playersFaction != null && playersFaction.getState() != State.PEACE) {
-            if (playersFaction.getState() == State.RAID && playersFaction.getRole() == Role.ATTACKERS) return;
+            if (playersFaction.getState() == State.RAID && playersFaction.getRole() == Role.ATTACKERS
+                    && factionTo.getState() == State.RAID && factionTo.getRole() == Role.DEFENDERS) return;
             e.setCancelled(true);
             e.getPlayer().sendMessage(ChatColor.GRAY + "Busy message!");
             return;
         }
 
-        MFaction factionTo = MFaction.MFactions.getByFaction(e.getFactionTo());
+
 
         // If factionto is wilderness safezone or warzone OR is own faction -> return
         if (factionTo == null || factionTo.getId() == playersFaction.getId()) return;
 
+        if (factionTo.getState() == State.GRACE) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_enemy_enter_in_grace_faction")).replace("%time-left%", TimeUtils.formatDatetime(factionTo.getNextState(),true)));
+        }
+
         if (factionTo.getState() == State.PEACE) {
             e.setCancelled(true);
 
-            String title = factionConfig.getString("gui.raid-proposal.title")
+            String title = factionConfig.getString("gui.raid_proposal.title")
                     .replace("%faction%",e.getFactionTo().getTag());
             int size = factionConfig.getInt("gui.raid-proposal.size");
             RaidProposalGUI gui = new RaidProposalGUI(title,size,module, playersFaction.getId(), factionTo.getId());
@@ -133,6 +136,9 @@ public class FactionsListeners implements Listener {
             gui.show(e.getPlayer());
             return;
         }
+
+
+
     }
 
 

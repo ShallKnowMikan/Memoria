@@ -23,8 +23,8 @@ public class Memoria {
     private @Getter final Bootstrap bootstrap;
     private @Getter final Logger logger;
     private @Getter final ConfigManager configManager;
-    private @Getter final FileConfiguration lang;
-    private @Getter final FileConfiguration general;
+    private @Getter FileConfiguration lang;
+    private @Getter FileConfiguration general;
 
     private @Getter final Map<String,Module> modules = new ConcurrentHashMap<>();
 
@@ -33,9 +33,6 @@ public class Memoria {
         this.bootstrap = bootstrap;
         this.logger = LoggerFactory.getLogger(bootstrap.getClass());
         this.configManager = new ConfigManager(bootstrap);
-
-        this.general = configManager.get("general.yml");
-        this.lang = configManager.get("lang.yml");
 
         AltairKit.enableGUIManager(this.bootstrap);
 
@@ -49,11 +46,12 @@ public class Memoria {
     }
 
     // Loads general files only
-    @SneakyThrows private void loadFiles(){
+    @SneakyThrows public void loadFiles(){
         for (String fileName : List.of("general.yml", "lang.yml")) {
             this.configManager.load(fileName,bootstrap.getResource(fileName));
         }
-
+        this.general = configManager.get("general.yml");
+        this.lang = configManager.get("lang.yml");
     }
 
     // Loads every module

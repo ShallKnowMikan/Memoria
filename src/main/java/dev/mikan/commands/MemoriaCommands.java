@@ -67,6 +67,7 @@ public class MemoriaCommands {
             return;
         }
 
+        this.plugin.loadFiles();
         this.plugin.getModules().values().forEach(Module::onReload);
         actor.reply("&7All modules have been reloaded.");
 

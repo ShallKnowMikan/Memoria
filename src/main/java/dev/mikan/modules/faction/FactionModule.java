@@ -68,7 +68,7 @@ public final class FactionModule extends Module implements Singleton {
 
     @Override
     public void registerCommands(Plugin plugin) {
-        AltairKit.registerCommands(new FactionCommands());
+        AltairKit.registerCommands(new FactionCommands(this));
         AltairKit.registerCommands(new MemoriaCommands(this.plugin));
         AltairKit.tabComplete("memoria reload",this.plugin.getModules().keySet().toArray(new String[0]));
         AltairKit.tabComplete("memoria reset", Factions.getInstance().getFactionTags().toArray(new String[0]));

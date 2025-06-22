@@ -1,7 +1,10 @@
 package dev.mikan.events;
 
 import com.massivecraft.factions.*;
+import dev.mikan.altairkit.utils.NmsUtils;
+import dev.mikan.modules.faction.FactionModule;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -80,6 +83,10 @@ public class ChunkJoinEvent extends Event implements Cancellable {
         newLocation.setPitch(from.getPitch());
         fixYaw(newLocation);
         player.teleport(newLocation);
+        Bukkit.getScheduler().runTaskLaterAsynchronously(FactionModule.instance().getPlugin().getBootstrap(), () -> {
+            NmsUtils.sendTitle(player,"");
+            NmsUtils.sendSubtitle(player,"");
+        },2);
     }
 
     private void fixYaw(Location location) {
