@@ -15,16 +15,21 @@ gui:
         name: '&7[&0M&fA]'
         lore:
           - "&7Non lo"
-          - "so!"
+      recognition:
+        position: 13
+        type: '35:11'
+        name: '&9Ricognizione'
+        lore:
+          - "&7{okok}"
       confirm:
-        position: 12
+        position: 11
         type: '35:5'
         name: '&aConferma'
         lore:
-          - "&7{okok}}"
+          - "&7{okok}"
       deny:
-        position: 14
+        position: 15
         type: '35:14'
         name: '&cRifiuta'
         lore:
-          - "&7&7{okok}}"
+          - "&7{okok}"

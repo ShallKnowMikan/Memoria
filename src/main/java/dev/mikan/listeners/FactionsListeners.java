@@ -2,18 +2,20 @@ package dev.mikan.listeners;
 
 import com.massivecraft.factions.Board;
 import com.massivecraft.factions.FLocation;
+import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.event.FactionAutoDisbandEvent;
 import com.massivecraft.factions.event.FactionCreateEvent;
 import com.massivecraft.factions.event.FactionDisbandEvent;
+import dev.mikan.altairkit.AltairKit;
+import dev.mikan.altairkit.utils.NBTUtils;
+import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.events.ChunkJoinEvent;
 import dev.mikan.gui.RaidProposalGUI;
-import dev.mikan.modules.faction.FactionModule;
-import dev.mikan.modules.faction.MFaction;
-import dev.mikan.modules.faction.State;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import dev.mikan.modules.faction.*;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -84,6 +86,7 @@ public class FactionsListeners implements Listener {
     *
     * Join others claim while in no faction AND faction to is not wilderness -> tp back
     *
+    * TODO: check if not in curfew before showing raid GUI
     * */
     @EventHandler public void onClaimJoin(ChunkJoinEvent e){
 
@@ -93,9 +96,22 @@ public class FactionsListeners implements Listener {
             return;
         }
 
+        // If joining a different land from the one saved in cache while in recognition
+        if (module.getRecognitionCache().containsKey(e.getPlayer())){
+            RecognitionCache cache = module.getRecognitionCache().get(e.getPlayer());
+            if (!e.getFactionTo().getId().equals(cache.factionIn().getId())){
+                e.getPlayer().setGameMode(cache.lastGamemode());
+                e.getPlayer().teleport(cache.location());
+                Bukkit.getScheduler().cancelTask(cache.taskId());
+                module.getRecognitionCache().remove(e.getPlayer());
+            }
+        }
+
+
         MFaction playersFaction = MFaction.MFactions.getByPlayer(e.getFPlayer());
 
         if (playersFaction != null && playersFaction.getState() != State.PEACE) {
+            if (playersFaction.getState() == State.RAID && playersFaction.getRole() == Role.ATTACKERS) return;
             e.setCancelled(true);
             e.getPlayer().sendMessage(ChatColor.GRAY + "Busy message!");
             return;
@@ -112,7 +128,7 @@ public class FactionsListeners implements Listener {
             String title = factionConfig.getString("gui.raid-proposal.title")
                     .replace("%faction%",e.getFactionTo().getTag());
             int size = factionConfig.getInt("gui.raid-proposal.size");
-            RaidProposalGUI gui = new RaidProposalGUI(title,size,module);
+            RaidProposalGUI gui = new RaidProposalGUI(title,size,module, playersFaction.getId(), factionTo.getId());
 
             gui.show(e.getPlayer());
             return;
@@ -155,6 +171,47 @@ public class FactionsListeners implements Listener {
     *  then build up the whole raid system. Good luck, you're the best.
     * */
     @EventHandler public void onRaidProposalGUIClick(InventoryClickEvent e){
+        if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR || !NBTUtils.hasKey(e.getCurrentItem(),RaidProposalGUI.ITEMS_TAG)) return;
 
+        // confirm item clicked
+        // else deny item was clicked
+        if (e.getCurrentItem().toString()
+                .equals(RaidProposalGUI.confirmItem.toString())){
+
+            e.getWhoClicked().closeInventory();
+
+            int attackingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[0].split(":")[1]);
+            int defendingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[1].split(":")[1]);
+
+            MFaction attackingFaction = MFaction.MFactions.getFactions().get(attackingFactionID);
+            MFaction defendingFaction = MFaction.MFactions.getFactions().get(defendingFactionID);
+
+            MFaction.MFactions.startRaid(attackingFaction,defendingFaction);
+
+        } else if (e.getCurrentItem().toString()
+                .equals(RaidProposalGUI.recognitionItem.toString())) {
+            e.getWhoClicked().closeInventory();
+            Player player = (Player) e.getWhoClicked();
+            int defendingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[1].split(":")[1]);
+
+            // 3600 = 3 minutes in ticks
+            int taskId = Bukkit.getScheduler().runTaskLater(module.getPlugin().getBootstrap(),() -> {
+                RecognitionCache cache = module.getRecognitionCache().remove(player);
+                player.setGameMode(cache.lastGamemode());
+                player.teleport(cache.location());
+            },3600).getTaskId();
+
+            module.getRecognitionCache().put(player,new RecognitionCache(taskId, Factions.getInstance().getFactionById(String.valueOf(defendingFactionID)), player.getGameMode(),player.getLocation()));
+            player.setGameMode(GameMode.SPECTATOR);
+
+            Location ahead = player.getLocation().clone().add(player.getLocation().getDirection().normalize().multiply(7));
+            player.teleport(ahead);
+
+            NmsUtils.sendActionBar(player, AltairKit.colorize("&9Recognition started."));
+        } else if (e.getCurrentItem().toString()
+                .equals(RaidProposalGUI.denyItem.toString())) {
+            e.getWhoClicked().closeInventory();
+        }
     }
+
 }

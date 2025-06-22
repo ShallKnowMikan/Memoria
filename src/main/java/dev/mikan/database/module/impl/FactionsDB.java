@@ -101,6 +101,24 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
 
     }
 
+    public void update(MFaction faction){
+        final String query = "UPDATE Factions SET state = ?,role = ?,victories = ?,defeats = ?,nextState = ?,opponentId = ? WHERE id = ?";
+        this.sql.updateAsync(query,
+                        faction.getState(),
+                        faction.getRole(),
+                        faction.getVictories(),
+                        faction.getDefeats(),
+                        faction.getNextState(),
+                        faction.getOpponentId(),
+                        faction.getId())
+                .whenComplete((success,error) -> {
+                    final String message = success ? "updated successfully." : "error while updating.";
+                    FactionModule.instance().info("Faction: {} -> {}",faction.getId(),message);
+                });
+    }
+
+
+
     public Set<MFaction> loadFactions(){
         final String query = "SELECT * FROM Factions";
 
@@ -110,13 +128,13 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
         try (CachedRowSet result = this.sql.query(query)){
             while (result.next()){
                 int id = result.getInt("id");
-                int opponentId = result.getInt("opponentId");
+                int opponentId = result.getInt("opponentId") <= 0 ? -1 : result.getInt("opponentId");
                 Role role = Role.valueOf(result.getString("role").toUpperCase());
                 State state = State.valueOf(result.getString("state").toUpperCase());
-
+                String nextState = result.getString("nextState");
                 int victories = result.getInt("victories");
                 int defeats = result.getInt("defeats");
-                factions.add(MFaction.MFactions.instance(id, role, state, victories, defeats, opponentId,loadBombers(id)));
+                factions.add(MFaction.MFactions.instance(id, role, state, victories, defeats, nextState,opponentId,loadBombers(id)));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

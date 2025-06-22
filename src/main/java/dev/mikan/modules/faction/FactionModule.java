@@ -1,5 +1,6 @@
 package dev.mikan.modules.faction;
 
+import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.Module;
@@ -12,8 +13,12 @@ import dev.mikan.listeners.FactionsListeners;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /*
 * Module for factions features here you can
@@ -22,8 +27,9 @@ import org.slf4j.Logger;
 * */
 public final class FactionModule extends Module implements Singleton {
 
-    private final Memoria plugin;
-    private final FactionsDB database;
+    private @Getter final Memoria plugin;
+    private @Getter final FactionsDB database;
+    private @Getter final Map<Player, RecognitionCache> recognitionCache = new ConcurrentHashMap<>();
 
     private @Getter FileConfiguration config;
 
@@ -65,6 +71,7 @@ public final class FactionModule extends Module implements Singleton {
         AltairKit.registerCommands(new FactionCommands());
         AltairKit.registerCommands(new MemoriaCommands(this.plugin));
         AltairKit.tabComplete("memoria reload",this.plugin.getModules().keySet().toArray(new String[0]));
+        AltairKit.tabComplete("memoria reset", Factions.getInstance().getFactionTags().toArray(new String[0]));
     }
 
     @Override

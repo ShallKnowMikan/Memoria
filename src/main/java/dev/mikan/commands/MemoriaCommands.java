@@ -1,5 +1,7 @@
 package dev.mikan.commands;
 
+import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.api.commands.AltairCMD;
 import dev.mikan.altairkit.api.commands.actors.CMDActor;
@@ -8,6 +10,7 @@ import dev.mikan.altairkit.api.commands.annotations.Description;
 import dev.mikan.altairkit.api.commands.annotations.Permission;
 import dev.mikan.altairkit.utils.Module;
 import dev.mikan.altairkit.utils.TimeUtils;
+import dev.mikan.modules.faction.MFaction;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -83,6 +86,19 @@ public class MemoriaCommands {
         actor.reply(date);
         actor.reply(String.valueOf(TimeUtils.isExpired(date)));
 
+
+    }
+
+    @Command("memoria reset")
+    public void reset(AltairCMD cmd, CMDActor actor, String factionName){
+
+        Faction f = Factions.getInstance().getByTag(factionName);
+        if (f == null) return;
+
+        MFaction faction = MFaction.MFactions.getById(Integer.parseInt(f.getId()));
+
+        MFaction.MFactions.reset(faction);
+        actor.reply("&9Faction reset.");
 
     }
 }
