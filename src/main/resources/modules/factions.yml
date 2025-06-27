@@ -4,7 +4,22 @@
 #██║╚██╔╝██║██╔══╝░░██║╚██╔╝██║██║░░██║██╔══██╗██║██╔══██║
 #██║░╚═╝░██║███████╗██║░╚═╝░██║╚█████╔╝██║░░██║██║██║░░██║
 #╚═╝░░░░░╚═╝╚══════╝╚═╝░░░░░╚═╝░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝
-curfew: ''
+
+grief_weapons:
+  - 'collassopsichico'
+curfew:
+  start: 00
+  end: 14
+state_title:
+  peace:
+    title: '&2Fase di pace'
+    subtitle: "&aLa tua fazione e' tornata in pace"
+  raid:
+    title: '&4Fase di raid'
+    subtitle: "&cLa tua fazione e' entrata in raid"
+  grace:
+    title: '&5Fase di grace'
+    subtitle: "&dLa tua fazione e' entrata in grace"
 cmd:
   data:
     peace:

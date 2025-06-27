@@ -1,11 +1,10 @@
 package dev.mikan.listeners;
 
-import com.massivecraft.factions.Board;
-import com.massivecraft.factions.FLocation;
-import com.massivecraft.factions.Factions;
+import com.massivecraft.factions.*;
 import com.massivecraft.factions.event.FactionAutoDisbandEvent;
 import com.massivecraft.factions.event.FactionCreateEvent;
 import com.massivecraft.factions.event.FactionDisbandEvent;
+import com.shampaggon.crackshot.events.WeaponPreShootEvent;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.NBTUtils;
 import dev.mikan.altairkit.utils.NmsUtils;
@@ -15,7 +14,10 @@ import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.events.ChunkJoinEvent;
 import dev.mikan.gui.RaidProposalGUI;
 import dev.mikan.modules.faction.*;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -90,6 +92,7 @@ public class FactionsListeners implements Listener {
         // Join others claim while in no faction AND faction to is not wilderness -> tp back
         if (e.getFPlayer().getFaction().isWilderness() && (!e.getFactionTo().isWilderness()) && !e.getFactionTo().isSafeZone() && !e.getFactionTo().isWarZone()) {
             e.setCancelled(true);
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_own_faction_is_wilderness")));
             return;
         }
 
@@ -107,11 +110,11 @@ public class FactionsListeners implements Listener {
 
         MFaction playersFaction = MFaction.MFactions.getByPlayer(e.getFPlayer());
         MFaction factionTo = MFaction.MFactions.getByFaction(e.getFactionTo());
-        if (playersFaction != null && playersFaction.getState() != State.PEACE) {
+        if (playersFaction != null && playersFaction.getState() != State.PEACE && !MFaction.MFactions.isDefault(e.getFactionTo())) {
             if (playersFaction.getState() == State.RAID && playersFaction.getRole() == Role.ATTACKERS
                     && factionTo.getState() == State.RAID && factionTo.getRole() == Role.DEFENDERS) return;
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.GRAY + "Busy message!");
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_own_faction_in_raid_or_grace").replace("%state%",playersFaction.getState().name().toLowerCase())));
             return;
         }
 
@@ -122,7 +125,14 @@ public class FactionsListeners implements Listener {
 
         if (factionTo.getState() == State.GRACE) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_enemy_enter_in_grace_faction")).replace("%time-left%", TimeUtils.formatDatetime(factionTo.getNextState(),true)));
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_grace_faction")).replace("%time-left%", TimeUtils.formatDatetime(factionTo.getNextState(),true)));
+            return;
+        }
+
+        if (factionTo.getState() == State.RAID && factionTo.getOpponentId() != playersFaction.getId()){
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_raid_faction")));
+            return;
         }
 
         if (factionTo.getState() == State.PEACE) {
@@ -171,16 +181,22 @@ public class FactionsListeners implements Listener {
 
 
 
-
     /*
-    * TODO: implement this listener in order to make possible raid declaration
-    *  then build up the whole raid system. Good luck, you're the best.
+    * -------------------
+    *   GUI MANAGERS
+    * -------------------
     * */
+
+
     @EventHandler public void onRaidProposalGUIClick(InventoryClickEvent e){
         if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR || !NBTUtils.hasKey(e.getCurrentItem(),RaidProposalGUI.ITEMS_TAG)) return;
 
         // confirm item clicked
         // else deny item was clicked
+
+        // It means RaidProposalGUI has never been initialized yet.
+        if (RaidProposalGUI.confirmItem == null) return;
+
         if (e.getCurrentItem().toString()
                 .equals(RaidProposalGUI.confirmItem.toString())){
 
@@ -217,6 +233,52 @@ public class FactionsListeners implements Listener {
         } else if (e.getCurrentItem().toString()
                 .equals(RaidProposalGUI.denyItem.toString())) {
             e.getWhoClicked().closeInventory();
+        }
+    }
+
+
+    /*
+    ---------------------
+    * Crackshot listeners
+    ---------------------
+    * */
+
+    // CURFEW
+    @EventHandler public void onShootCheckCurfew(WeaponPreShootEvent e){
+        if (module.getConfig().getStringList("grief_weapons").contains(e.getWeaponTitle())
+                && MFaction.MFactions.isCurfewEnabled()) {
+            e.setCancelled(true);
+            String msg = AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_curfew_shoot_prohibition"));
+            e.getPlayer().sendMessage(msg);
+        }
+    }
+
+    // Prevents normal player from shooting with grief weapon wile not in default factions or own and not selected as bomber of own faction
+    @EventHandler public void onNotABomber(WeaponPreShootEvent e){
+        FPlayer player = FPlayers.getInstance().getByPlayer(e.getPlayer());
+        // Is grief weapon
+        if (module.getConfig().getStringList("grief_weapons").contains(e.getWeaponTitle())
+                // is not default faction
+                && !MFaction.MFactions.isDefault(player.getFaction())
+                // Is bomber
+                && !MFaction.MFactions.getByPlayer(e.getPlayer()).getBombers().contains(e.getPlayer().getUniqueId())
+                // not in wilderness
+                && player.isInOthersTerritory()) {
+            e.setCancelled(true);
+            String msg = AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_shoot_prohibition"));
+            e.getPlayer().sendMessage(msg);
+        }
+    }
+
+    @EventHandler public void onOwnTerritoryGriefWeapon(WeaponPreShootEvent e){
+        FPlayer player = FPlayers.getInstance().getByPlayer(e.getPlayer());
+        // Is grief weapon
+        if (module.getConfig().getStringList("grief_weapons").contains(e.getWeaponTitle())
+            && player.isInOwnTerritory()){
+
+            e.setCancelled(true);
+            String msg = AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_shoot_prohibition"));
+            e.getPlayer().sendMessage(msg);
         }
     }
 

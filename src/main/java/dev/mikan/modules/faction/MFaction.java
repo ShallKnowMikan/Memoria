@@ -5,6 +5,7 @@ import com.massivecraft.factions.FPlayers;
 import com.massivecraft.factions.Faction;
 import com.massivecraft.factions.Factions;
 import dev.mikan.altairkit.utils.NmsUtils;
+import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.events.GraceStartEvent;
 import dev.mikan.events.PeaceStartEvent;
@@ -182,6 +183,18 @@ public final class MFaction {
                 NmsUtils.sendTitle(player.getPlayer(),title);
                 NmsUtils.sendSubtitle(player.getPlayer(),subtitle);
             }
+        }
+
+        public boolean isDefault(Faction faction){
+            return (faction.isWilderness() || faction.isSafeZone() || faction.isWarZone());
+        }
+
+        public boolean isCurfewEnabled(){
+            byte currentHour = Byte.parseByte(TimeUtils.current().split(" ")[1].split(":")[0]);
+            byte start = FactionModule.instance().getCurfewStart();
+            byte end = FactionModule.instance().getCurfewEnd();
+
+            return start <= currentHour && end > currentHour;
         }
     }
 

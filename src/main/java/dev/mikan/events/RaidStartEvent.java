@@ -5,6 +5,7 @@ import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
 import dev.mikan.modules.faction.State;
@@ -22,12 +23,14 @@ public class RaidStartEvent extends Event implements Cancellable {
     private final MFaction attackingFaction;
     private final MFaction defendingFaction;
     private final Memoria plugin;
+    private final FactionModule module;
 
 
     public RaidStartEvent(MFaction attackingFaction, MFaction defendingFaction, Memoria plugin) {
         this.attackingFaction = attackingFaction;
         this.defendingFaction = defendingFaction;
         this.plugin = plugin;
+        this.module = FactionModule.instance();
     }
 
 
@@ -47,8 +50,8 @@ public class RaidStartEvent extends Event implements Cancellable {
             MFaction.MFactions.getRaidTasksCache().put(attackingFaction.getRaidId(), taskID);
 
 
-            String message = AltairKit.colorize("&cRaid started");
-            String subMessage = AltairKit.colorize("&4watch out");
+            String message = AltairKit.colorize(module.getConfig().getString("state_title.raid.title"));
+            String subMessage = AltairKit.colorize(module.getConfig().getString("state_title.raid.subtitle"));;
 
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(attackingFaction.getId())),message,subMessage);
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(defendingFaction.getId())),message,subMessage);

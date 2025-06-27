@@ -6,4 +6,11 @@
 #╚═╝░░░░░╚═╝╚══════╝╚═╝░░░░░╚═╝░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝
 
 factions:
-  on_enemy_enter_in_grace_faction: '&7Fazione in grace! Tempo rimanente: %time-left%'
+  on_player_enter_others_claim:
+    on_grace_faction: '&7Fazione in grace! Tempo rimanente: %time-left%.'
+    on_raid_faction: "&7Fazione in raid con un'altra, non puoi interferire."
+
+    on_own_faction_in_raid_or_grace: '&7Non puoi entrare in questo territorio mentre sei in %state%.'
+    on_own_faction_is_wilderness: '&7Non puoi entrare in questo territorio se non sei in nessuna fazione.'
+  on_curfew_shoot_prohibition: "&cNon puoi sparare, il coprifuoco e' attivo"
+  on_shoot_prohibition: "&cNon puoi sparare con quest'arma qui"

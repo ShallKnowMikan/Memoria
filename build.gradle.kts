@@ -66,6 +66,7 @@ dependencies {
 
     // Factions
     compileOnly("com.massivecraft:FactionUUID:1.8.8@jar")
+    compileOnly("Shampaggon:CrackShot:0.98.11U")
 
 }
 

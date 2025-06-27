@@ -4,6 +4,7 @@ import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
 import dev.mikan.modules.faction.State;
@@ -21,11 +22,13 @@ public class PeaceStartEvent extends Event implements Cancellable {
     private final MFaction faction;
 
     private final Memoria plugin;
+    private final FactionModule module;
 
 
     public PeaceStartEvent(MFaction faction, Memoria plugin) {
         this.faction = faction;
         this.plugin = plugin;
+        this.module = FactionModule.instance();
     }
 
 
@@ -36,8 +39,8 @@ public class PeaceStartEvent extends Event implements Cancellable {
         Bukkit.getScheduler().runTaskAsynchronously(plugin.getBootstrap(), () -> {
             updateData();
 
-            String peaceMessage = AltairKit.colorize("&2Peace phase started");
-            String peaceSubMessage = AltairKit.colorize("&ayour faction is currently in peace");
+            String peaceMessage = AltairKit.colorize(module.getConfig().getString("state_title.peace.title"));
+            String peaceSubMessage = AltairKit.colorize(module.getConfig().getString("state_title.peace.subtitle"));
 
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(faction.getId())),peaceMessage,peaceSubMessage);
         });

@@ -1,8 +1,11 @@
 package dev.mikan;
 
+import dev.mikan.altairkit.utils.Module;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Bootstrap extends JavaPlugin {
+
+    private Memoria memoria;
 
     @Override
     public void onLoad() {
@@ -12,11 +15,11 @@ public class Bootstrap extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        new Memoria(this);
+        memoria = new Memoria(this);
     }
 
     @Override
     public void onDisable() {
-
+        memoria.getModules().values().forEach(Module::onDisable);
     }
 }

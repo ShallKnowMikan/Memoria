@@ -5,6 +5,7 @@ import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
 import dev.mikan.modules.faction.State;
@@ -22,12 +23,14 @@ public class GraceStartEvent extends Event implements Cancellable {
     private final MFaction attackingFaction;
     private final MFaction defendingFaction;
     private final Memoria plugin;
+    private final FactionModule module;
 
 
     public GraceStartEvent(MFaction attackingFaction, MFaction defendingFaction, Memoria plugin) {
         this.attackingFaction = attackingFaction;
         this.defendingFaction = defendingFaction;
         this.plugin = plugin;
+        this.module = FactionModule.instance();
     }
 
 
@@ -50,8 +53,8 @@ public class GraceStartEvent extends Event implements Cancellable {
 
             MFaction.MFactions.startPeace(attackingFaction);
 
-            String graceMessage = AltairKit.colorize("&5Grace phase started");
-            String graceSubMessage = AltairKit.colorize("&dyour faction is currently in peace");
+            String graceMessage = AltairKit.colorize(module.getConfig().getString("state_title.grace.title"));
+            String graceSubMessage = AltairKit.colorize(module.getConfig().getString("state_title.grace.subtitle"));;
 
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(defendingFaction.getId())),graceMessage,graceSubMessage);
         });
