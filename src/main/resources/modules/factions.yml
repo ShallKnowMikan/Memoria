@@ -7,6 +7,8 @@
 
 grief_weapons:
   - 'collassopsichico'
+sand_placer_weapon: 'Flashbang_CSP'
+
 curfew:
   start: 00
   end: 14

@@ -14,3 +14,4 @@ factions:
     on_own_faction_is_wilderness: '&7Non puoi entrare in questo territorio se non sei in nessuna fazione.'
   on_curfew_shoot_prohibition: "&cNon puoi sparare, il coprifuoco e' attivo"
   on_shoot_prohibition: "&cNon puoi sparare con quest'arma qui"
+  on_raid_interfere_prohibition: "&cNon puoi interferire con i raid!"

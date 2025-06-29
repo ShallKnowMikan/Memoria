@@ -4,7 +4,10 @@ import com.massivecraft.factions.*;
 import com.massivecraft.factions.event.FactionAutoDisbandEvent;
 import com.massivecraft.factions.event.FactionCreateEvent;
 import com.massivecraft.factions.event.FactionDisbandEvent;
+import com.shampaggon.crackshot.events.WeaponDamageEntityEvent;
+import com.shampaggon.crackshot.events.WeaponExplodeEvent;
 import com.shampaggon.crackshot.events.WeaponPreShootEvent;
+import com.shampaggon.crackshot.events.WeaponShootEvent;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.NBTUtils;
 import dev.mikan.altairkit.utils.NmsUtils;
@@ -14,10 +17,8 @@ import dev.mikan.database.module.impl.FactionsDB;
 import dev.mikan.events.ChunkJoinEvent;
 import dev.mikan.gui.RaidProposalGUI;
 import dev.mikan.modules.faction.*;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,13 +27,21 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class FactionsListeners implements Listener {
 
     private final FactionsDB database;
     private final FactionModule module;
     private final FileConfiguration factionConfig;
 
-
+    // Player -> weapon title
+    private final Map<Player,String> griefShootingMap = new HashMap<>();
+    // Player -> weapon title
+    private final Map<Player,String> sandPlacerMap = new HashMap<>();
 
     public FactionsListeners(FactionsDB database) {
         this.database = database;
@@ -270,11 +279,12 @@ public class FactionsListeners implements Listener {
         }
     }
 
+    // Prevents players from use grief weapons in own territory
     @EventHandler public void onOwnTerritoryGriefWeapon(WeaponPreShootEvent e){
         FPlayer player = FPlayers.getInstance().getByPlayer(e.getPlayer());
         // Is grief weapon
         if (module.getConfig().getStringList("grief_weapons").contains(e.getWeaponTitle())
-            && player.isInOwnTerritory()){
+            && player.isInOwnTerritory() && !MFaction.MFactions.isDefault(player.getFaction())){
 
             e.setCancelled(true);
             String msg = AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_shoot_prohibition"));
@@ -282,4 +292,138 @@ public class FactionsListeners implements Listener {
         }
     }
 
+    /*
+    * Prevents shooters to interfere in a raid
+    *
+    * blocks the damage when victim is in a raid state
+    * and in one of the 2 involved factions land
+    * */
+    @EventHandler public void onRaidInterfere(WeaponDamageEntityEvent e){
+        if (!(e.getVictim() instanceof Player victim)) return;
+
+        MFaction shootersFaction = MFaction.MFactions.getByPlayer(e.getPlayer());
+
+        MFaction victimsFaction = MFaction.MFactions.getByPlayer(victim);
+        if (victimsFaction == null || victimsFaction.getState() != State.RAID) return;
+        if (shootersFaction == null || shootersFaction.getId() == victimsFaction.getOpponentId()) return;
+
+        MFaction factionAt = MFaction.MFactions.getByFaction(Board.getInstance().getFactionAt(new FLocation(victim.getLocation())));
+
+        // If is in own claim or in opponent's
+        if (factionAt.getId() == victimsFaction.getId() || factionAt.getId() == victimsFaction.getOpponentId()) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(
+                    AltairKit.colorize(
+                            module.getPlugin().getLang().getString("factions.on_raid_interfere_prohibition")
+                    )
+            );
+        }
+
+    }
+
+    /*
+    * SAND AND SLAB BUSTING DOWN HERE
+    *
+    * need to combo with EntityExplodeEvent
+    * jesus christ I hate crackshot
+    * */
+
+    @EventHandler public void onSandAndSlabBust(WeaponExplodeEvent e){
+        if (griefShootingMap.containsKey(e.getPlayer()) && griefShootingMap.get(e.getPlayer()).equals(e.getWeaponTitle())){
+
+            // Removes sand blocks in rage starting from the source
+            final int radius = 1;
+            Location loc = e.getLocation();
+            Block closest = this.findClosest(loc, Material.SAND,1);
+            if (closest != null && closest.getType() == Material.SAND) {
+                for(int y = loc.getBlockY() - radius; y <= loc.getBlockY() + radius; ++y) {
+                    Block block = loc.getWorld().getBlockAt(closest.getX(), y, closest.getZ());
+                    if (block.getType() == Material.SAND) {
+                        block.setType(Material.AIR);
+                    }
+                }
+            }
+
+            Set<Material> slabs = Set.of(
+                    Material.WOOD_STEP,
+                    Material.STEP, // Includes all slab variants
+                    Material.STONE_SLAB2
+            );
+
+            // Removes slab blocks in rage starting from the source
+            for (Material slab : slabs) {
+                closest = this.findClosest(loc, slab,1);
+                if (closest != null && closest.getType() == slab) {
+                    for(int y = loc.getBlockY() - radius; y <= loc.getBlockY() + radius; ++y) {
+                        Block block = loc.getWorld().getBlockAt(closest.getX(), y, closest.getZ());
+                        if (block.getType() == slab) {
+                            block.setType(Material.AIR);
+                        }
+                    }
+                }
+            }
+
+            griefShootingMap.remove(e.getPlayer());
+        }
+    }
+
+
+    @EventHandler public void onSandPlacerExplode(WeaponExplodeEvent e){
+        if (sandPlacerMap.containsKey(e.getPlayer()) && sandPlacerMap.get(e.getPlayer()).equals(e.getWeaponTitle())
+            && e.getLocation().getBlockY() < 255){
+            int y = e.getLocation().getBlockY();
+            int x = e.getLocation().getBlockX();
+            int z = e.getLocation().getBlockZ();
+
+            World world = e.getLocation().getWorld();
+
+            do {
+
+                Block block = world.getBlockAt(x,y++,z);
+                if (block.getType() == Material.AIR
+                        || block.getType() == Material.WATER
+                        || block.getType() == Material.STATIONARY_WATER
+                        || block.getType() == Material.STATIONARY_LAVA
+                        || block.getType() == Material.LAVA)
+                    block.setType(Material.SAND);
+                else break;
+            }while (y < 255);
+            sandPlacerMap.remove(e.getPlayer());
+        }
+    }
+
+    @EventHandler public void onGriefWeaponShoot(WeaponShootEvent e){
+        List<String> griefWeapon = module.getConfig().getStringList("grief_weapons");
+        if (griefWeapon.contains(e.getWeaponTitle())) {
+            griefShootingMap.put(e.getPlayer(),e.getWeaponTitle());
+        }
+        String sandPlacerWeapon = module.getConfig().getString("sand_placer_weapon");
+        if (e.getWeaponTitle().equals(sandPlacerWeapon)){
+            sandPlacerMap.put(e.getPlayer(),sandPlacerWeapon);
+        }
+
+    }
+
+
+    public final Block findClosest(Location source, Material type,int radius) {
+        Block nearestSand = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    Location loc = source.clone().add(x, y, z);
+                    Block block = loc.getBlock();
+                    if (block.getType() == type) {
+                        double distance = source.distanceSquared(loc);
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestSand = block;
+                        }
+                    }
+                }
+            }
+        }
+
+        return nearestSand;
+    }
 }
