@@ -6,7 +6,7 @@ import com.massivecraft.factions.Faction;
 import com.massivecraft.factions.Factions;
 import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.altairkit.utils.TimeUtils;
-import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.database.module.impl.FactionDatabase;
 import dev.mikan.events.GraceStartEvent;
 import dev.mikan.events.PeaceStartEvent;
 import dev.mikan.events.RaidStartEvent;
@@ -72,18 +72,26 @@ public final class MFaction {
         return "";
     }
 
+    public MFaction getOpponent(){
+        return MFactions.getById(this.opponentId);
+    }
+
     public int maxBombers(){
         int members = Factions.getInstance().getFactionById(String.valueOf(id)).getFPlayers().size();
         return (members / 100 * 15) + 3;
     }
 
     /*
-    * TODO: check if factions like warzone and wildernes will be stored
+    * TODO: check if factions like war zone and wilderness will be stored
     *  into the database one created
     * */
     @UtilityClass
     public final static class MFactions{
-        private @Getter final Map<Integer,MFaction> factions = new ConcurrentHashMap<>();
+        private @Getter final Map<Integer,MFaction> cache = new ConcurrentHashMap<>();
+
+        public void printCache(){
+            FactionModule.instance().info("cache: {}",cache);
+        }
 
         // Faction raid id -> Bukkit task id
         private @Getter final Map<String, Integer> raidTasksCache = new ConcurrentHashMap<>();
@@ -92,7 +100,7 @@ public final class MFaction {
         private @Getter final Map<Integer, Integer> graceTasksCache = new ConcurrentHashMap<>();
 
         private void updateFaction(MFaction faction){
-            factions.put(faction.getId(),faction);
+            cache.put(faction.getId(),faction);
         }
 
         public MFaction instance(int id,Role role,State state,int victories, int defeats,String nextState, int opponentId,Set<UUID> bombers){
@@ -102,28 +110,30 @@ public final class MFaction {
         }
 
         public MFaction getByFaction(Faction faction){
-            return factions.get(Integer.parseInt(faction.getId()));
+            return cache.get(Integer.parseInt(faction.getId()));
         }
 
         public MFaction getByPlayer(FPlayer player){
-            return factions.get(Integer.parseInt(player.getFactionId()));
+            return cache.get(Integer.parseInt(player.getFactionId()));
         }
 
         public MFaction getByPlayer(Player player){
-            return factions.get(Integer.parseInt(FPlayers.getInstance().getByPlayer(player).getFactionId()));
+            return cache.get(Integer.parseInt(FPlayers.getInstance().getByPlayer(player).getFactionId()));
         }
 
         public MFaction getByName(String name){
             Faction faction = Factions.getInstance().getByTag(name);
-            return faction != null ? factions.get(Integer.parseInt(faction.getId())) : null;
+            return faction != null ? cache.get(Integer.parseInt(faction.getId())) : null;
         }
 
+
+
         public MFaction getById(int id){
-            return factions.get(id);
+            return cache.get(id);
         }
 
         public void destruct(int id){
-            factions.remove(id);
+            cache.remove(id);
         }
 
         public void startRaid(MFaction attackingFaction,MFaction defendingFaction){
@@ -150,6 +160,7 @@ public final class MFaction {
         public void reset(MFaction faction){
             if (faction == null) return;
             if (faction.state == State.RAID){
+                Bukkit.getScheduler().cancelTask(raidTasksCache.remove(faction.getRaidId()));
                 MFaction opponent = getById(faction.opponentId);
 
                 opponent.state = State.PEACE;
@@ -163,10 +174,10 @@ public final class MFaction {
                 faction.nextState = "";
                 opponent.nextState = "";
 
-                Bukkit.getScheduler().cancelTask(raidTasksCache.remove(faction.getRaidId()));
 
-                FactionsDB.instance().update(faction);
-                FactionsDB.instance().update(opponent);
+
+                FactionDatabase.instance().update(faction);
+                FactionDatabase.instance().update(opponent);
 
                 return;
             }
@@ -175,7 +186,7 @@ public final class MFaction {
             faction.opponentId = -1;
             faction.role = Role.NONE;
             faction.nextState = "";
-            FactionsDB.instance().update(faction);
+            FactionDatabase.instance().update(faction);
         }
 
         public void sendTitle(Faction faction,String title, String subtitle){

@@ -3,12 +3,14 @@ package dev.mikan.database.module.impl;
 
 import com.massivecraft.factions.Faction;
 import dev.mikan.altairkit.utils.Singleton;
+import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.database.SQLiteManager;
 import dev.mikan.database.module.ModuleDatabase;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
 import dev.mikan.modules.faction.State;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 
 import javax.sql.rowset.CachedRowSet;
@@ -21,20 +23,25 @@ import java.util.UUID;
 * Bombers and factions are 2 tables, in order to get bombers for each
 * I'm using an inner join from factions while loading each
 * */
-public final class FactionsDB extends ModuleDatabase implements Singleton {
-
- private final SQLiteManager manager; private final Logger logger;
+public final class FactionDatabase extends ModuleDatabase implements Singleton {
 
 
-    public FactionsDB(SQLiteManager manager, Logger logger) {
+
+
+    public FactionDatabase(SQLiteManager manager, Logger logger) {
         super(manager,logger);
-
-        this.manager = manager;
-        this.logger = logger;
     }
 
     @Override
     public void setup() {
+
+        final String createServerStopTable = """
+                CREATE TABLE IF NOT EXISTS ServerStopLog(
+                    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                    datetime VARCHAR(24) DEFAULT NULL
+                )
+                """;
+
         final String createFactionTable = """
                 CREATE TABLE IF NOT EXISTS Factions(
                     id INTEGER PRIMARY KEY,
@@ -53,28 +60,57 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
         final String createBombersTable = """
                 CREATE TABLE IF NOT EXISTS Bombers(
                     UUID VARCHAR(48) PRIMARY KEY,
-                    name CHAR(16) NOT NULL,
                     factionId INT NOT NULL,
-                    FOREIGN KEY(factionId) REFERENCES Factions(id)
-                )
-                """;
-        final String createCoreTable = """
-                CREATE TABLE IF NOT EXISTS Cores(
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    factionId INT DEFAULT NULL,
-                    level INT DEFAULT 0,
-                    location VARCHAR(1024) NOT NULL,
-                    FOREIGN KEY(factionId) REFERENCES Factions(factionId)
+                    FOREIGN KEY(factionId) REFERENCES Factions(id) ON DELETE CASCADE
                 )
                 """;
 
 
+
+        this.sql.update(createServerStopTable);
         this.sql.update(createFactionTable);
         this.sql.update(createBombersTable);
-        this.sql.update(createCoreTable);
 
 
     }
+
+    @SneakyThrows
+    public String getServerStopLog(){
+        final String query = "SELECT datetime FROM ServerStopLog WHERE id = ?";
+        try (CachedRowSet result = this.sql.query(query,1)){
+            if (result.next()) return result.getString("datetime");
+            else return "";
+        }
+    }
+
+    /*
+    * Checks if record exists, if not will create it
+    * If record already exists it will update it with current
+    * date time
+    * */
+    public void updateServerStopLog(){
+        String query = "REPLACE INTO ServerStopLog (id, datetime) VALUES (?, ?)";
+        this.sql.update(query, 1, TimeUtils.current());
+    }
+
+    public void insertBomber(UUID uuid,int factionId){
+        final String query = "INSERT INTO Bombers (UUID,factionId) VALUES(?,?)";
+
+        this.sql.updateAsync(query,uuid.toString(),factionId)
+                .whenComplete((success,error) -> {
+                    if (!success) FactionModule.instance().error("Error while inserting bomber!");
+                });
+    }
+
+    public void removeBomber(UUID uuid,int factionId){
+        final String query = "DELETE FROM Bombers WHERE UUID = ? AND factionId = ?";
+
+        this.sql.updateAsync(query,uuid.toString(),factionId)
+                .whenComplete((success,error) -> {
+                    if (!success) FactionModule.instance().error("Error while deleting bomber!");
+                });
+    }
+
 
     public void insert(Faction faction){
         final int id = Integer.parseInt(faction.getId());
@@ -85,6 +121,7 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
                 .whenComplete((success,error) -> {
                     final String message = success ? "added successfully." : "error while adding.";
                     FactionModule.instance().info("Faction: {} -> {}",id,message);
+                    MFaction.MFactions.instance(id,Role.NONE,State.PEACE,0,0,"",-1,new HashSet<>());
                 });
     }
 
@@ -102,7 +139,7 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
     }
 
     public void update(MFaction faction){
-        final String query = "UPDATE Factions SET state = ?,role = ?,victories = ?,defeats = ?,nextState = ?,opponentId = ? WHERE id = ?";
+        String query = "UPDATE Factions SET state = ?,role = ?,victories = ?,defeats = ?,nextState = ?,opponentId = ? WHERE id = ?";
         this.sql.updateAsync(query,
                         faction.getState(),
                         faction.getRole(),
@@ -119,11 +156,8 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
 
 
 
-    public Set<MFaction> loadFactions(){
+    public void loadFactions(){
         final String query = "SELECT * FROM Factions";
-
-        Set<MFaction> factions = new HashSet<>();
-
 
         try (CachedRowSet result = this.sql.query(query)){
             while (result.next()){
@@ -134,12 +168,12 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
                 String nextState = result.getString("nextState");
                 int victories = result.getInt("victories");
                 int defeats = result.getInt("defeats");
-                factions.add(MFaction.MFactions.instance(id, role, state, victories, defeats, nextState,opponentId,loadBombers(id)));
+
+                MFaction.MFactions.instance(id, role, state, victories, defeats, nextState,opponentId,loadBombers(id));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return factions;
     }
 
     private Set<UUID> loadBombers(int id){
@@ -156,7 +190,9 @@ public final class FactionsDB extends ModuleDatabase implements Singleton {
     }
 
 
-    public static FactionsDB instance(){
-        return Singleton.getInstance(FactionsDB.class,() -> null);
+
+
+    public static FactionDatabase instance(){
+        return Singleton.getInstance(FactionDatabase.class,() -> null);
     }
 }

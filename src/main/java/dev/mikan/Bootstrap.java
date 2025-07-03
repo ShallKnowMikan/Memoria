@@ -20,6 +20,7 @@ public class Bootstrap extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        memoria.getModules().values().forEach(Module::onDisable);
+        if (this.memoria != null)
+            memoria.getModules().values().forEach(Module::onDisable);
     }
 }

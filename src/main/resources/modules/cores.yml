@@ -1,0 +1,75 @@
+#███╗░░░███╗███████╗███╗░░░███╗░█████╗░██████╗░██╗░█████╗░
+#████╗░████║██╔════╝████╗░████║██╔══██╗██╔══██╗██║██╔══██╗
+#██╔████╔██║█████╗░░██╔████╔██║██║░░██║██████╔╝██║███████║
+#██║╚██╔╝██║██╔══╝░░██║╚██╔╝██║██║░░██║██╔══██╗██║██╔══██║
+#██║░╚═╝░██║███████╗██║░╚═╝░██║╚█████╔╝██║░░██║██║██║░░██║
+#╚═╝░░░░░╚═╝╚══════╝╚═╝░░░░░╚═╝░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝
+
+
+item:
+  type: '57'
+  name: '&bCore livello %core_level_generic%'
+  Lore:
+    - "&3Core potente forte op incredibile"
+    - "&3Troppa forza in questo core!"
+
+hologram:
+  - "Core della fazione: %core_name%"
+  - "Vita: %core_health_amount%"
+  - "Vita massima: %core_max_health%"
+
+gui:
+  size: 9
+  open_delay: 20
+  item:
+    filler:
+      type: '160:15'
+      name: '&7[&0M&fA]'
+      lore:
+        - "&7Non lo"
+        - "so!"
+    remove:
+      type: '166'
+      slots:
+        - 2
+      name: '&4Rimuovi core'
+      lore:
+        - "&cRimuove il core"
+        - "!"
+    upgrade:
+      type: '138'
+      slots:
+        - 6
+      name: '&bLivella il core!'
+      lore:
+        - "Passa al livello successivo %core_nextlevel%" #Le placeholder %core_nextlevel% e %core_cost_nextlevel% sono interne alla gui e non usabili al di fuori di essa.
+        - "Costo livello successivo in soldi %core_cost_nextlevel%"
+    max_level:
+      type: '166'
+      slots:
+        - 2
+      name: '&4Rimuovi core'
+      lore:
+        - "&cRimuove il core"
+        - "!"
+
+level:
+  1:
+    default: true
+    name: 'uno'
+    next: 2
+    health: 100
+    reward_points: 0
+    upgrade_cost: 100
+    regen:
+      per_second: 1
+      start_delay_minutes: 10
+  2:
+    name: 'due'
+    next: 0
+    health: 100
+    reward_points: 0
+    upgrade_cost: 100
+    regen:
+      per_second: 1
+      start_delay_minutes: 10

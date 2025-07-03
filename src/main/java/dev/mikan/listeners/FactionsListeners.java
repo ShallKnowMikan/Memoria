@@ -13,10 +13,13 @@ import dev.mikan.altairkit.utils.NBTUtils;
 import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.commands.FactionCommands;
-import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.database.module.impl.FactionDatabase;
 import dev.mikan.events.ChunkJoinEvent;
+import dev.mikan.gui.BombersGUI;
+import dev.mikan.gui.BombersSelectionGUI;
 import dev.mikan.gui.RaidProposalGUI;
 import dev.mikan.modules.faction.*;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -26,15 +29,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+@Slf4j
 public class FactionsListeners implements Listener {
 
-    private final FactionsDB database;
+    private final FactionDatabase database;
     private final FactionModule module;
     private final FileConfiguration factionConfig;
 
@@ -43,7 +46,7 @@ public class FactionsListeners implements Listener {
     // Player -> weapon title
     private final Map<Player,String> sandPlacerMap = new HashMap<>();
 
-    public FactionsListeners(FactionsDB database) {
+    public FactionsListeners(FactionDatabase database) {
         this.database = database;
         this.module = FactionModule.instance();
         this.factionConfig = module.getConfig();
@@ -118,8 +121,23 @@ public class FactionsListeners implements Listener {
 
 
         MFaction playersFaction = MFaction.MFactions.getByPlayer(e.getFPlayer());
+
+        if (playersFaction == null){
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_own_faction_is_wilderness")));
+            return;
+        }
+
         MFaction factionTo = MFaction.MFactions.getByFaction(e.getFactionTo());
-        if (playersFaction != null && playersFaction.getState() != State.PEACE && !MFaction.MFactions.isDefault(e.getFactionTo())) {
+        // If factionto is wilderness safezone or warzone OR is own faction -> return
+        if (factionTo == null || factionTo.getId() == playersFaction.getId()) return;
+
+        if (factionTo.getState() == State.GRACE) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_grace_faction")).replace("%time-left%", TimeUtils.formatDatetime(factionTo.getNextState(),true)));
+            return;
+        }
+        if (playersFaction.getState() != State.PEACE && !MFaction.MFactions.isDefault(e.getFactionTo())) {
             if (playersFaction.getState() == State.RAID && playersFaction.getRole() == Role.ATTACKERS
                     && factionTo.getState() == State.RAID && factionTo.getRole() == Role.DEFENDERS) return;
             e.setCancelled(true);
@@ -129,14 +147,7 @@ public class FactionsListeners implements Listener {
 
 
 
-        // If factionto is wilderness safezone or warzone OR is own faction -> return
-        if (factionTo == null || factionTo.getId() == playersFaction.getId()) return;
 
-        if (factionTo.getState() == State.GRACE) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(AltairKit.colorize(module.getPlugin().getLang().getString("factions.on_player_enter_others_claim.on_grace_faction")).replace("%time-left%", TimeUtils.formatDatetime(factionTo.getNextState(),true)));
-            return;
-        }
 
         if (factionTo.getState() == State.RAID && factionTo.getOpponentId() != playersFaction.getId()){
             e.setCancelled(true);
@@ -149,7 +160,7 @@ public class FactionsListeners implements Listener {
 
             String title = factionConfig.getString("gui.raid_proposal.title")
                     .replace("%faction%",e.getFactionTo().getTag());
-            int size = factionConfig.getInt("gui.raid-proposal.size");
+            int size = factionConfig.getInt("gui.raid_proposal.size");
             RaidProposalGUI gui = new RaidProposalGUI(title,size,module, playersFaction.getId(), factionTo.getId());
 
             gui.show(e.getPlayer());
@@ -198,6 +209,7 @@ public class FactionsListeners implements Listener {
 
 
     @EventHandler public void onRaidProposalGUIClick(InventoryClickEvent e){
+        if (e.getClickedInventory() == null || !(e.getClickedInventory().getHolder() instanceof RaidProposalGUI)) return;
         if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR || !NBTUtils.hasKey(e.getCurrentItem(),RaidProposalGUI.ITEMS_TAG)) return;
 
         // confirm item clicked
@@ -206,6 +218,7 @@ public class FactionsListeners implements Listener {
         // It means RaidProposalGUI has never been initialized yet.
         if (RaidProposalGUI.confirmItem == null) return;
 
+        // Start raid then
         if (e.getCurrentItem().toString()
                 .equals(RaidProposalGUI.confirmItem.toString())){
 
@@ -214,14 +227,22 @@ public class FactionsListeners implements Listener {
             int attackingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[0].split(":")[1]);
             int defendingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[1].split(":")[1]);
 
-            MFaction attackingFaction = MFaction.MFactions.getFactions().get(attackingFactionID);
-            MFaction defendingFaction = MFaction.MFactions.getFactions().get(defendingFactionID);
+            MFaction attackingFaction = MFaction.MFactions.getCache().get(attackingFactionID);
+            if (attackingFaction.getBombers().isEmpty()){
+                e.getWhoClicked().sendMessage(AltairKit.colorize(
+                        module.getPlugin().getLang().getString("factions.on_raid_attempt_without_bombers_prohibition")
+                ));
+                return;
+            }
+            MFaction defendingFaction = MFaction.MFactions.getCache().get(defendingFactionID);
 
             MFaction.MFactions.startRaid(attackingFaction,defendingFaction);
 
         } else if (e.getCurrentItem().toString()
                 .equals(RaidProposalGUI.recognitionItem.toString())) {
             e.getWhoClicked().closeInventory();
+            // Recognition stuff
+
             Player player = (Player) e.getWhoClicked();
             int defendingFactionID = Integer.parseInt(NBTUtils.value(e.getCurrentItem(), RaidProposalGUI.ITEMS_TAG, String.class).toString().split(" ")[1].split(":")[1]);
 
@@ -245,6 +266,76 @@ public class FactionsListeners implements Listener {
         }
     }
 
+    @EventHandler public void onBombersGUIClick(InventoryClickEvent e){
+        if (e.getCurrentItem() == null) return;
+        if (e.getClickedInventory() == null || e.getCurrentItem().getType() == Material.AIR) return;
+        if (!(e.getClickedInventory().getHolder() instanceof BombersGUI)) return;
+
+        Player player = (Player) e.getWhoClicked();
+        MFaction faction = MFaction.MFactions.getByPlayer(player);
+
+        if (!NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.HEAD_KEY)) {
+            if (NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.NEXT_PAGE_KEY)) {
+                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersSelectionGUI.NEXT_PAGE_KEY,String.class).toString().split(":");
+                int nextPage = Integer.parseInt(tokens[1]);
+                boolean isValid = Boolean.parseBoolean(tokens[0]);
+
+                if (isValid) {
+                    BombersGUI gui = new BombersGUI(e.getInventory().getTitle(),
+                            e.getInventory().getSize(),
+                            Factions.getInstance().getFactionById(String.valueOf(faction.getId())),
+                            nextPage);
+
+                    player.closeInventory();
+                    gui.show(player);
+                }
+
+            }
+            else if (NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.PREVIOUS_PAGE_KEY)) {
+                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersSelectionGUI.PREVIOUS_PAGE_KEY,String.class).toString().split(":");
+                int previousPage = Integer.parseInt(tokens[1]);
+                boolean isValid = Boolean.parseBoolean(tokens[0]);
+
+                if (isValid) {
+                    BombersGUI gui = new BombersGUI(e.getInventory().getTitle(),
+                            e.getInventory().getSize(),
+                            Factions.getInstance().getFactionById(String.valueOf(faction.getId())),
+                            previousPage);
+
+                    player.closeInventory();
+                    gui.show(player);
+                }
+            }
+            return;
+        }
+        else if (player == null || faction == null) return;
+
+        ItemStack head = e.getCurrentItem();
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+
+        List<String> lore = new ArrayList<>();
+        String active = AltairKit.colorize(module.getConfig().getString("gui.bombers.bomber.type.active"));
+        String inactive = AltairKit.colorize(module.getConfig().getString("gui.bombers.bomber.type.inactive"));
+
+        UUID clickedUUID =UUID.fromString((String) NBTUtils.value(head,BombersSelectionGUI.HEAD_KEY, String.class));
+        boolean wasPresent = faction.getBombers().contains(clickedUUID);
+        for (String line : meta.getLore()) {
+            if (wasPresent){
+                lore.add(line.replace(active,inactive));
+                faction.getBombers().remove(clickedUUID);
+                database.removeBomber(clickedUUID, faction.getId());
+            } else {
+                lore.add(line.replace(inactive,active));
+                faction.getBombers().add(clickedUUID);
+                database.insertBomber(clickedUUID,faction.getId());
+            }
+
+        }
+
+        meta.setLore(lore);
+        head.setItemMeta(meta);
+
+    }
 
     /*
     ---------------------

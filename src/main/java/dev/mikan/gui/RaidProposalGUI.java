@@ -7,6 +7,7 @@ import dev.mikan.altairkit.utils.NBTUtils;
 import dev.mikan.modules.faction.FactionModule;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class RaidProposalGUI extends AltairGUI {
 
         loadFillerItem();
 
-        this.build(this.fillerItem,true);
+        this.build(this.fillerItem,this,true);
 
         confirmItem = loadItem("confirm");
         recognitionItem = loadItem("recognition");
@@ -47,13 +48,13 @@ public class RaidProposalGUI extends AltairGUI {
     }
 
     private ItemStack loadItem(String configName){
-        String[] typeTokens = config.getString("gui.raid-proposal.items."+configName+".type").split(":");
+        String[] typeTokens = config.getString("gui.raid_proposal.items."+configName+".type").split(":");
         int fillerItemId = Integer.parseInt(typeTokens[0]);
         byte data = Byte.parseByte(typeTokens.length > 1 ? typeTokens[1] : "0");
 
-        byte position = (byte) config.getInt("gui.raid-proposal.items."+configName+".position");
-        String name = AltairKit.colorize(config.getString("gui.raid-proposal.items."+configName+".name"));
-        List<String> lore = config.getStringList("gui.raid-proposal.items."+configName+".lore");
+        byte position = (byte) config.getInt("gui.raid_proposal.items."+configName+".position");
+        String name = AltairKit.colorize(config.getString("gui.raid_proposal.items."+configName+".name"));
+        List<String> lore = config.getStringList("gui.raid_proposal.items."+configName+".lore");
         List<String> colorizedLore = new ArrayList<>();
         lore.forEach(line -> colorizedLore.add(AltairKit.colorize(line)));
 
@@ -74,11 +75,11 @@ public class RaidProposalGUI extends AltairGUI {
 
 
     private void loadFillerItem(){
-        String[] typeTokens = config.getString("gui.raid-proposal.items.filler.type").split(":");
+        String[] typeTokens = config.getString("gui.raid_proposal.items.filler.type").split(":");
         int fillerItemId = Integer.parseInt(typeTokens[0]);
         byte data = Byte.parseByte(typeTokens.length > 1 ? typeTokens[1] : "0");
 
-        String name = AltairKit.colorize(config.getString("gui.raid-proposal.items.filler.name"));
+        String name = AltairKit.colorize(config.getString("gui.raid_proposal.items.filler.name"));
         List<String> lore = config.getStringList("gui.raid-proposal.items.filler.lore");
         List<String> colorizedLore = new ArrayList<>();
         lore.forEach(line -> colorizedLore.add(AltairKit.colorize(line)));
@@ -93,5 +94,8 @@ public class RaidProposalGUI extends AltairGUI {
     }
 
 
-
+    @Override
+    public Inventory getInventory() {
+        return this.gui;
+    }
 }

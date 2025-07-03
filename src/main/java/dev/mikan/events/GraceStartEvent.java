@@ -4,7 +4,7 @@ import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.TimeUtils;
-import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.database.module.impl.FactionDatabase;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
@@ -41,6 +41,7 @@ public class GraceStartEvent extends Event implements Cancellable {
         int taskID = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin.getBootstrap(), () -> {
             MFaction.MFactions.getGraceTasksCache().remove(defendingFaction.getId());
 
+            module.info("Starting peace for: {}",defendingFaction.getId());
             MFaction.MFactions.startPeace(defendingFaction);
         },3456000L).getTaskId();
 
@@ -62,6 +63,9 @@ public class GraceStartEvent extends Event implements Cancellable {
 
 
     private void updateData(){
+
+        module.info("update date on start grace event.");
+
         attackingFaction.setOpponentId(-1);
         defendingFaction.setOpponentId(-1);
 
@@ -76,8 +80,8 @@ public class GraceStartEvent extends Event implements Cancellable {
         attackingFaction.setNextState(nextState);
         defendingFaction.setNextState(nextState);
 
-        FactionsDB.instance().update(attackingFaction);
-        FactionsDB.instance().update(defendingFaction);
+        FactionDatabase.instance().update(attackingFaction);
+        FactionDatabase.instance().update(defendingFaction);
     }
 
     private static final HandlerList HANDLERS = new HandlerList();

@@ -26,7 +26,8 @@ public class Memoria {
     private @Getter FileConfiguration lang;
     private @Getter FileConfiguration general;
 
-    private @Getter final Map<String,Module> modules = new ConcurrentHashMap<>();
+    private @Getter final Map<Class<? extends Module>,Module> modules = new ConcurrentHashMap<>();
+    private @Getter final Map<String,Class<? extends Module>> moduleNames = new ConcurrentHashMap<>();
 
     public Memoria(Bootstrap bootstrap) {
 
@@ -36,9 +37,14 @@ public class Memoria {
 
         AltairKit.enableGUIManager(this.bootstrap);
 
-        modules.put("faction",Singleton.getInstance(FactionModule.class,() -> new FactionModule(this,"Faction", logger)));
-        modules.put("core",Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core",logger)));
-        modules.put("regenblock",Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger)));
+        modules.put(FactionModule.class,Singleton.getInstance(FactionModule.class,() -> new FactionModule(this,"Faction", logger)));
+        moduleNames.put("faction", FactionModule.class);
+
+        modules.put(CoreModule.class,Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core", logger)));
+        moduleNames.put("core", FactionModule.class);
+
+        modules.put(RegenblockModule.class,Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger)));
+        moduleNames.put("regenblock",RegenblockModule.class);
 
         loadFiles();
 
@@ -48,7 +54,7 @@ public class Memoria {
     // Loads general files only
     @SneakyThrows public void loadFiles(){
         for (String fileName : List.of("general.yml", "lang.yml")) {
-            this.configManager.load(fileName,bootstrap.getResource(fileName));
+            this.configManager.load(fileName,bootstrap);
         }
         this.general = configManager.get("general.yml");
         this.lang = configManager.get("lang.yml");

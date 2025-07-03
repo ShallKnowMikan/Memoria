@@ -3,7 +3,7 @@ package dev.mikan.events;
 import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
-import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.database.module.impl.FactionDatabase;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
@@ -56,7 +56,9 @@ public class PeaceStartEvent extends Event implements Cancellable {
 
         faction.setNextState("");
 
-        FactionsDB.instance().update(faction);
+        module.info("Peace for faction: {}",faction.getId());
+
+        FactionDatabase.instance().update(faction);
 
     }
 

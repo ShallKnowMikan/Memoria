@@ -15,3 +15,5 @@ factions:
   on_curfew_shoot_prohibition: "&cNon puoi sparare, il coprifuoco e' attivo"
   on_shoot_prohibition: "&cNon puoi sparare con quest'arma qui"
   on_raid_interfere_prohibition: "&cNon puoi interferire con i raid!"
+  on_bombers_cmd_prohibition: "&7Non hai abbastanza permessi per aprire quest'interfaccia."
+  on_raid_attempt_without_bombers_prohibition: "Non puoi dichiarare un raid senza dichiarare prima almeno un bomber."

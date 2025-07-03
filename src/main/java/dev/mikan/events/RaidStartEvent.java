@@ -4,7 +4,7 @@ import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.utils.TimeUtils;
-import dev.mikan.database.module.impl.FactionsDB;
+import dev.mikan.database.module.impl.FactionDatabase;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import dev.mikan.modules.faction.Role;
@@ -41,8 +41,9 @@ public class RaidStartEvent extends Event implements Cancellable {
         int taskID = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin.getBootstrap(), () -> {
             int taskId = MFaction.MFactions.getRaidTasksCache().remove(attackingFaction.getRaidId());
 
+            module.info("Start grace for: {} and {}",attackingFaction.getId(),defendingFaction.getId());
             MFaction.MFactions.startGrace(attackingFaction,defendingFaction);
-        },60L).getTaskId();
+        },144000).getTaskId();
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin.getBootstrap(), () -> {
             updateData();
@@ -69,13 +70,13 @@ public class RaidStartEvent extends Event implements Cancellable {
         attackingFaction.setRole(Role.ATTACKERS);
         defendingFaction.setRole(Role.DEFENDERS);
 
-        String nextState = TimeUtils.next(0,0,0,2,0,0);
+        String nextState = TimeUtils.next(0,0,0,0,0,10);
 
         attackingFaction.setNextState(nextState);
         defendingFaction.setNextState(nextState);
 
-        FactionsDB.instance().update(attackingFaction);
-        FactionsDB.instance().update(defendingFaction);
+        FactionDatabase.instance().update(attackingFaction);
+        FactionDatabase.instance().update(defendingFaction);
     }
 
 

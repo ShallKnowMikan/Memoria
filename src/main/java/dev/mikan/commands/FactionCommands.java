@@ -1,13 +1,19 @@
 package dev.mikan.commands;
 
+import com.massivecraft.factions.FPlayer;
+import com.massivecraft.factions.FPlayers;
 import com.massivecraft.factions.Faction;
 import com.massivecraft.factions.Factions;
+import com.massivecraft.factions.perms.Role;
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.api.commands.AltairCMD;
+import dev.mikan.altairkit.api.commands.SenderType;
 import dev.mikan.altairkit.api.commands.actors.CMDActor;
 import dev.mikan.altairkit.api.commands.annotations.Command;
 import dev.mikan.altairkit.api.commands.annotations.Description;
+import dev.mikan.altairkit.api.commands.annotations.Sender;
 import dev.mikan.altairkit.utils.TimeUtils;
+import dev.mikan.gui.BombersGUI;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
 import org.bukkit.Bukkit;
@@ -37,8 +43,28 @@ public class FactionCommands {
     );
 
     @Command(F_CMD_FAKE_ROOT + " bombers")
+    @Sender(SenderType.PLAYER)
     public void bombers(AltairCMD cmd, CMDActor actor){
-        actor.reply("Ok ok got it");
+        FPlayer player = FPlayers.getInstance().getByPlayer(actor.asPlayer());
+
+        if (!player.getRole().isAtLeast(Role.COLEADER)) {
+            player.sendMessage(AltairKit.colorize(
+                    module.getPlugin().getLang().getString("factions.on_bombers_cmd_prohibition")
+            ));
+            return;
+        }
+
+        String title = AltairKit.colorize(module.getConfig().getString("gui.bombers.title"));
+        int size = module.getConfig().getInt("gui.bombers.size");
+        BombersGUI bombersGUI = new BombersGUI(title, size,FPlayers.getInstance().getByPlayer(actor.asPlayer()).getFaction(),1);
+
+
+        bombersGUI.show(actor.asPlayer());
+    }
+
+    @Command(F_CMD_FAKE_ROOT + " bombers show")
+    public void bombersShow(AltairCMD cmd, CMDActor actor){
+
     }
 
 

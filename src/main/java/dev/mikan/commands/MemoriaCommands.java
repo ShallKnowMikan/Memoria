@@ -9,12 +9,8 @@ import dev.mikan.altairkit.api.commands.annotations.Command;
 import dev.mikan.altairkit.api.commands.annotations.Description;
 import dev.mikan.altairkit.api.commands.annotations.Permission;
 import dev.mikan.altairkit.utils.Module;
-import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.modules.faction.MFaction;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class MemoriaCommands {
@@ -54,11 +50,13 @@ public class MemoriaCommands {
         helpLines.forEach(actor::reply);
     }
 
+
     @Command("memoria reload")
     @Permission("dev.mikan.reload.memoria")
     public void reload(AltairCMD cmd, CMDActor actor,String moduleName){
         if (!moduleName.isEmpty()){
-            Module module = this.plugin.getModules().get(moduleName.toLowerCase());
+            Class<? extends Module> moduleClass = this.plugin.getModuleNames().get(moduleName.toLowerCase());
+            Module module = this.plugin.getModules().get(moduleClass);
             if (module == null) {
                 actor.reply("&7Specified module not found.");
                 return;
@@ -73,22 +71,22 @@ public class MemoriaCommands {
 
     }
 
-    @Command("memoria test")
-    public void test(AltairCMD cmd, CMDActor actor,int years,
-                     int months,
-                     int days,
-                     int hours,
-                     int minutes,
-                     int seconds){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        actor.reply(formatter.format(ZonedDateTime.now(ZoneId.of("Europe/Rome"))));
-        String date = TimeUtils.next(years,months,days,hours,minutes,seconds);
-        actor.reply(date);
-        actor.reply(String.valueOf(TimeUtils.isExpired(date)));
-
-
-    }
+//    @Command("memoria test")
+//    public void test(AltairCMD cmd, CMDActor actor,int years,
+//                     int months,
+//                     int days,
+//                     int hours,
+//                     int minutes,
+//                     int seconds){
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+//
+//        actor.reply(formatter.format(ZonedDateTime.now(ZoneId.of("Europe/Rome"))));
+//        String date = TimeUtils.next(years,months,days,hours,minutes,seconds);
+//        actor.reply(date);
+//        actor.reply(String.valueOf(TimeUtils.isExpired(date)));
+//
+//
+//    }
 
     @Command("memoria reset")
     public void reset(AltairCMD cmd, CMDActor actor, String factionName){

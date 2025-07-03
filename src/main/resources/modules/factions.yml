@@ -50,6 +50,34 @@ cmd:
       - '&f  ┃ &7Tempo rimanente: %time-left%'
       - '&8&m--------------------------------------'
 gui:
+  bombers:
+    title: '&7Bombers -> &b&n%faction%&7'
+    size: 54
+    items:
+      filler:
+        type: '160:15'
+        name: '&7[&0M&fA]'
+        lore:
+          - "&7Non lo"
+      next_page:
+        type: '262'
+        name: '&bNext page'
+        lore:
+          - ""
+        position: 5
+      previous_page:
+        type: '262'
+        name: '&bPrevious page'
+        lore:
+          - ""
+        position: 3
+    bomber:
+      type:
+        active: '&aAttivo'
+        inactive: '&cInattivo'
+      lore:
+        - '&7Bomber: %isActive%'
+
   raid_proposal:
     title: '&7Vuoi attaccare &b&n%faction%&7?'
     size: 27
