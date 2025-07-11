@@ -94,11 +94,13 @@ public final class FactionModule extends Module {
         AltairKit.registerCommands(new MemoriaCommands(this.plugin));
         AltairKit.tabComplete("memoria reload",this.plugin.getModuleNames().keySet().toArray(new String[0]));
         AltairKit.tabComplete("memoria reset", Factions.getInstance().getFactionTags().toArray(new String[0]));
+        info("Commands registered.");
     }
 
     @Override
     public void registerListeners(Plugin plugin) {
         listen(new FactionsListeners(database));
+        info("Listeners registered.");
     }
 
     public static FactionModule instance(){
@@ -142,11 +144,6 @@ public final class FactionModule extends Module {
             * */
             String differentialDatetime = TimeUtils.remaining(stopDatetime,nextDatetime);
 
-            info("nextDatetime: {} ", nextDatetime);
-            info("stopDatetime: {} ", stopDatetime);
-            info("Differential date time: {} ", differentialDatetime);
-            info("Current time: {} ", TimeUtils.current());
-            info("Next state: {} ", TimeUtils.add(differentialDatetime));
 
             faction.setNextState(TimeUtils.add(differentialDatetime));
 
@@ -160,12 +157,12 @@ public final class FactionModule extends Module {
     private void manageTasks(MFaction faction,long ticks){
         int taskId = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin.getBootstrap(),() -> {
             if (faction.getState() == State.RAID) {
-                info("Removing raid task id");
+
                 MFaction.MFactions.getRaidTasksCache().remove(faction.getRaidId());
 
                 MFaction.MFactions.startGrace(faction, MFaction.MFactions.getById(faction.getOpponentId()));
             } else if (faction.getState() == State.GRACE){
-                info("Removing grace task id");
+
                 MFaction.MFactions.getGraceTasksCache().remove(faction.getId());
 
                 MFaction.MFactions.startPeace(faction);
@@ -173,7 +170,7 @@ public final class FactionModule extends Module {
         },ticks).getTaskId();
 
         if (faction.getState() == State.RAID) {
-            info("putting raid task id");
+
             // JUST one faction of the 2 in raid is enough, since they are still bond by the raid ID
             MFaction.MFactions.getRaidTasksCache().put(faction.getRaidId(), taskId);
 
@@ -183,7 +180,7 @@ public final class FactionModule extends Module {
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(faction.getId())),message,subMessage);
             MFaction.MFactions.sendTitle(Factions.getInstance().getFactionById(String.valueOf(faction.getOpponentId())),message,subMessage);
         } else if (faction.getState() == State.GRACE) {
-            info("putting grace task id");
+
             // JUST one faction of the 2 in raid is enough, since they are still bond by the raid ID
             MFaction.MFactions.getGraceTasksCache().put(faction.getId(), taskId);
 

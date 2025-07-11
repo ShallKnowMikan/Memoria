@@ -1,4 +1,4 @@
-package dev.mikan.gui;
+package dev.mikan.gui.factions;
 
 import com.massivecraft.factions.Faction;
 import dev.mikan.altairkit.AltairKit;

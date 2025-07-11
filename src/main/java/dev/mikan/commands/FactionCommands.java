@@ -13,9 +13,10 @@ import dev.mikan.altairkit.api.commands.annotations.Command;
 import dev.mikan.altairkit.api.commands.annotations.Description;
 import dev.mikan.altairkit.api.commands.annotations.Sender;
 import dev.mikan.altairkit.utils.TimeUtils;
-import dev.mikan.gui.BombersGUI;
+import dev.mikan.gui.factions.BombersGUI;
 import dev.mikan.modules.faction.FactionModule;
 import dev.mikan.modules.faction.MFaction;
+import dev.mikan.modules.faction.State;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -39,6 +40,7 @@ public class FactionCommands {
     public final static String F_CMD_FAKE_ROOT = "emmikanquelloreal";
     public final static Set<String> F_COMMANDS = Set.of(
             "bombers",
+            "raid stop",
             "data"
     );
 
@@ -62,8 +64,18 @@ public class FactionCommands {
         bombersGUI.show(actor.asPlayer());
     }
 
-    @Command(F_CMD_FAKE_ROOT + " bombers show")
-    public void bombersShow(AltairCMD cmd, CMDActor actor){
+    @Command(F_CMD_FAKE_ROOT +" raid stop")
+    @Description("Stops eventual raids")
+    @Sender(SenderType.PLAYER)
+    public void raidStop(AltairCMD cmd, CMDActor actor){
+        MFaction faction = MFaction.MFactions.getByPlayer(actor.asPlayer());
+
+        if (faction.getState() != State.RAID) return;
+
+
+        MFaction opponent = MFaction.MFactions.getById(faction.getOpponentId());
+        if (opponent.getRole() == dev.mikan.modules.faction.Role.ATTACKERS) MFaction.MFactions.startGrace(opponent,faction);
+        else MFaction.MFactions.startGrace(faction,opponent);
 
     }
 

@@ -4,11 +4,14 @@ import com.massivecraft.factions.Faction;
 import com.massivecraft.factions.Factions;
 import dev.mikan.Memoria;
 import dev.mikan.altairkit.api.commands.AltairCMD;
+import dev.mikan.altairkit.api.commands.SenderType;
 import dev.mikan.altairkit.api.commands.actors.CMDActor;
 import dev.mikan.altairkit.api.commands.annotations.Command;
 import dev.mikan.altairkit.api.commands.annotations.Description;
 import dev.mikan.altairkit.api.commands.annotations.Permission;
+import dev.mikan.altairkit.api.commands.annotations.Sender;
 import dev.mikan.altairkit.utils.Module;
+import dev.mikan.modules.core.Core;
 import dev.mikan.modules.faction.MFaction;
 
 import java.util.List;
@@ -55,6 +58,7 @@ public class MemoriaCommands {
     @Permission("dev.mikan.reload.memoria")
     public void reload(AltairCMD cmd, CMDActor actor,String moduleName){
         if (!moduleName.isEmpty()){
+
             Class<? extends Module> moduleClass = this.plugin.getModuleNames().get(moduleName.toLowerCase());
             Module module = this.plugin.getModules().get(moduleClass);
             if (module == null) {
@@ -100,4 +104,18 @@ public class MemoriaCommands {
         actor.reply("&9Faction reset.");
 
     }
+
+    @Command("memoria testing")
+    @Sender(SenderType.PLAYER)
+    public void test(AltairCMD cmd, CMDActor actor){
+
+        MFaction faction = MFaction.MFactions.getByPlayer(actor.asPlayer());
+        if (faction == null || !faction.hasCore()) return;
+
+        Core core = faction.getCore();
+        core.destruct(false);
+
+    }
+
+
 }

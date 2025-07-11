@@ -8,18 +8,20 @@
 
 item:
   type: '57'
-  name: '&bCore livello %core_level_generic%'
-  Lore:
+  name: '&bCore livello %core_level%'
+  lore:
     - "&3Core potente forte op incredibile"
     - "&3Troppa forza in questo core!"
 
 hologram:
-  - "Core della fazione: %core_name%"
-  - "Vita: %core_health_amount%"
-  - "Vita massima: %core_max_health%"
+  - "Core della fazione: %faction%"
+  - "Livello: %level%"
+  - "Vita: %health%"
+  - "Vita massima: %max_health%"
 
 gui:
-  size: 9
+  title: '&7Core di &9&n%faction%'
+  size: 27
   open_delay: 20
   item:
     filler:
@@ -31,27 +33,25 @@ gui:
     remove:
       type: '166'
       slots:
-        - 2
+        - 12
       name: '&4Rimuovi core'
       lore:
         - "&cRimuove il core"
-        - "!"
+        - "&7!"
     upgrade:
       type: '138'
       slots:
-        - 6
+        - 14
       name: '&bLivella il core!'
       lore:
-        - "Passa al livello successivo %core_nextlevel%" #Le placeholder %core_nextlevel% e %core_cost_nextlevel% sono interne alla gui e non usabili al di fuori di essa.
-        - "Costo livello successivo in soldi %core_cost_nextlevel%"
+        - "&7Passa al livello successivo %next%"
+        - "&7Costo livello successivo in soldi %cost%"
     max_level:
-      type: '166'
-      slots:
-        - 2
-      name: '&4Rimuovi core'
+      type: '159:11'
+      name: '&bMassimo livello raggiunto'
       lore:
-        - "&cRimuove il core"
-        - "!"
+        - "&9Complimenti!"
+        - "&7!"
 
 level:
   1:
@@ -67,9 +67,9 @@ level:
   2:
     name: 'due'
     next: 0
-    health: 100
+    health: 200
     reward_points: 0
-    upgrade_cost: 100
+    upgrade_cost: 0
     regen:
       per_second: 1
       start_delay_minutes: 10

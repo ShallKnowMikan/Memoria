@@ -8,11 +8,15 @@ import dev.mikan.modules.core.Core;
 import dev.mikan.modules.core.CoreModule;
 import dev.mikan.modules.core.Level;
 import dev.mikan.modules.faction.FactionModule;
+import dev.mikan.modules.faction.MFaction;
+import eu.decentsoftware.holograms.api.DHAPI;
+import eu.decentsoftware.holograms.api.holograms.Hologram;
 import org.bukkit.Location;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 
 public class CoreDatabase extends ModuleDatabase implements Singleton {
 
@@ -37,6 +41,22 @@ public class CoreDatabase extends ModuleDatabase implements Singleton {
         this.sql.update(createCoreTable);
     }
 
+    public void update(Core core){
+        if (core == null) return;
+
+        final String query = "UPDATE Cores SET level = ? WHERE id = ?";
+
+        this.sql.updateAsync(query,core.getLevel().id(),core.getId()).whenComplete(
+                (success,error) -> {
+                    CoreModule.instance().info(
+                            success ? "Level of {} successfully updated." :
+                                    "Error while updating {}'s level.",
+                            core.getId()
+                    );
+                }
+        );
+    }
+
     public void delete(Core core){
         final int id = core.getId();
         final String query = "DELETE FROM Cores WHERE id = ?";
@@ -50,24 +70,23 @@ public class CoreDatabase extends ModuleDatabase implements Singleton {
 
     }
 
-    public void insert(Core core){
-        final int id = core.getId();
-        final int factionId = core.getFactionId();
-        final String query = "INSERT INTO Factions(id,factionId,location) VALUES(?,?,?)";
+    public CompletableFuture<Integer> insert(Level level, Location loc, MFaction faction){
+        final int factionId = faction.getId();
+        final String query = "INSERT INTO Cores(factionId,location,level) VALUES(?,?,?)";
 
-        final String loc = new Gson().toJson(core.getLocation().serialize());
+        final String locString = new Gson().toJson(loc.serialize());
 
-        this.sql.updateAsync(query,id,factionId,loc)
-                .whenComplete((success,error) -> {
-                    final String message = success ? "added successfully." : "error while adding.";
-                    CoreModule.instance().info("Core: {} -> {}",id,message);
-                });
+        return this.sql.updateAsyncWithId(query,factionId,locString,level.id());
     }
 
     public void loadCores(){
         final String query = "SELECT * FROM Cores";
 
         this.sql.queryAsync(query).whenComplete((result,error) -> {
+            if (error != null) {
+                logger.error("Error in loadCores()", error);
+                return;
+            }
             try {
                 while (result.next()){
                     int id = result.getInt("id");
@@ -78,6 +97,8 @@ public class CoreDatabase extends ModuleDatabase implements Singleton {
                             HashMap.class
                     ));
 
+                    Hologram hologram = DHAPI.getHologram(String.valueOf(id));
+                    if (hologram != null) hologram.delete();
                     Core.Cores.instance(id,factionId,loc,level);
                 }
             } catch (SQLException e) {

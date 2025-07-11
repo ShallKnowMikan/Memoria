@@ -7,9 +7,10 @@ import com.massivecraft.factions.Factions;
 import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.database.module.impl.FactionDatabase;
-import dev.mikan.events.GraceStartEvent;
-import dev.mikan.events.PeaceStartEvent;
-import dev.mikan.events.RaidStartEvent;
+import dev.mikan.events.factions.GraceStartEvent;
+import dev.mikan.events.factions.PeaceStartEvent;
+import dev.mikan.events.factions.RaidStartEvent;
+import dev.mikan.modules.core.Core;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.UtilityClass;
@@ -32,8 +33,9 @@ public final class MFaction {
     private @Setter State state;
     private final Set<UUID> bombers;
     private @Setter String nextState;
+    private @Setter Core core;
 
-    private MFaction(int id, Role role, State state, int victories, int defeats,String nextState, int opponentId, Set<UUID> bombers) {
+    private MFaction(int id, Role role, State state, int victories, int defeats, String nextState, int opponentId, Set<UUID> bombers) {
         this.id = id;
         this.victories = victories;
         this.defeats = defeats;
@@ -70,6 +72,10 @@ public final class MFaction {
             return opponentId + ":" + this.id;
 
         return "";
+    }
+
+    public boolean hasCore(){
+        return this.core != null;
     }
 
     public MFaction getOpponent(){

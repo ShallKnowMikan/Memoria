@@ -1,4 +1,4 @@
-package dev.mikan.events;
+package dev.mikan.events.factions;
 
 import com.massivecraft.factions.*;
 import dev.mikan.altairkit.utils.NmsUtils;

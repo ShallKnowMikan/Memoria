@@ -17,6 +17,8 @@ tasks.register<Copy>("copy"){
 tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>(){
     archiveClassifier.set("")
     relocate("dev.mikan.altairkit", "dev.mikan.shaded.altairkit")
+//    relocate("com.github.retrooper.packetevents", "dev.mikan.shaded.packetevents.api")
+//    relocate("io.github.retrooper.packetevents", "dev.mikan.shaded.packetevents.imp")
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -46,6 +48,10 @@ repositories {
         name = "jitpack.io"
         url = uri("https://jitpack.io")
     }
+    maven {
+        name = "rosewood"
+        url = uri("https://repo.rosewooddev.io/repository/public/")
+    }
 }
 
 dependencies {
@@ -68,6 +74,12 @@ dependencies {
     compileOnly("com.massivecraft:FactionUUID:1.8.8@jar")
     compileOnly("Shampaggon:CrackShot:0.98.11U")
 
+    // Decent holograms
+    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.9")
+
+    // Economy and points
+    compileOnly("net.milkbowl.vault:VaultAPI:1.7")
+    compileOnly("org.black_ixx:playerpoints:3.3.0")
 }
 
 tasks.named("build"){

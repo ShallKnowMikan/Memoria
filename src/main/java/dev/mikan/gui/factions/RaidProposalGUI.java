@@ -1,4 +1,4 @@
-package dev.mikan.gui;
+package dev.mikan.gui.factions;
 
 import dev.mikan.altairkit.AltairKit;
 import dev.mikan.altairkit.api.gui.AltairGUI;

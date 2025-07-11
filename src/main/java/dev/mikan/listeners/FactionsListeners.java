@@ -14,10 +14,9 @@ import dev.mikan.altairkit.utils.NmsUtils;
 import dev.mikan.altairkit.utils.TimeUtils;
 import dev.mikan.commands.FactionCommands;
 import dev.mikan.database.module.impl.FactionDatabase;
-import dev.mikan.events.ChunkJoinEvent;
-import dev.mikan.gui.BombersGUI;
-import dev.mikan.gui.BombersSelectionGUI;
-import dev.mikan.gui.RaidProposalGUI;
+import dev.mikan.events.factions.ChunkJoinEvent;
+import dev.mikan.gui.factions.BombersGUI;
+import dev.mikan.gui.factions.RaidProposalGUI;
 import dev.mikan.modules.faction.*;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.*;
@@ -75,7 +74,7 @@ public class FactionsListeners implements Listener {
     @EventHandler public void onFCommand(PlayerCommandPreprocessEvent e){
         if (!e.getMessage().startsWith("/f")
                 || !(e.getMessage().split(" ").length >= 2
-                    && FactionCommands.F_COMMANDS.contains(e.getMessage().split(" ")[1].toLowerCase()))) return;
+                    && FactionCommands.F_COMMANDS.contains(e.getMessage().replaceFirst("/f ", "").toLowerCase()))) return;
 
         String command = e.getMessage().replaceFirst("f", FactionCommands.F_CMD_FAKE_ROOT).substring(1);
         e.setCancelled(true);
@@ -101,6 +100,7 @@ public class FactionsListeners implements Listener {
     * */
     @EventHandler public void onClaimJoin(ChunkJoinEvent e){
 
+        if (e.getFPlayer().isAdminBypassing()) return;
         // Join others claim while in no faction AND faction to is not wilderness -> tp back
         if (e.getFPlayer().getFaction().isWilderness() && (!e.getFactionTo().isWilderness()) && !e.getFactionTo().isSafeZone() && !e.getFactionTo().isWarZone()) {
             e.setCancelled(true);
@@ -274,9 +274,9 @@ public class FactionsListeners implements Listener {
         Player player = (Player) e.getWhoClicked();
         MFaction faction = MFaction.MFactions.getByPlayer(player);
 
-        if (!NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.HEAD_KEY)) {
-            if (NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.NEXT_PAGE_KEY)) {
-                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersSelectionGUI.NEXT_PAGE_KEY,String.class).toString().split(":");
+        if (!NBTUtils.hasKey(e.getCurrentItem(), BombersGUI.HEAD_KEY)) {
+            if (NBTUtils.hasKey(e.getCurrentItem(), BombersGUI.NEXT_PAGE_KEY)) {
+                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersGUI.NEXT_PAGE_KEY,String.class).toString().split(":");
                 int nextPage = Integer.parseInt(tokens[1]);
                 boolean isValid = Boolean.parseBoolean(tokens[0]);
 
@@ -291,8 +291,8 @@ public class FactionsListeners implements Listener {
                 }
 
             }
-            else if (NBTUtils.hasKey(e.getCurrentItem(), BombersSelectionGUI.PREVIOUS_PAGE_KEY)) {
-                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersSelectionGUI.PREVIOUS_PAGE_KEY,String.class).toString().split(":");
+            else if (NBTUtils.hasKey(e.getCurrentItem(), BombersGUI.PREVIOUS_PAGE_KEY)) {
+                String[] tokens = NBTUtils.value(e.getCurrentItem(), BombersGUI.PREVIOUS_PAGE_KEY,String.class).toString().split(":");
                 int previousPage = Integer.parseInt(tokens[1]);
                 boolean isValid = Boolean.parseBoolean(tokens[0]);
 
@@ -317,7 +317,7 @@ public class FactionsListeners implements Listener {
         String active = AltairKit.colorize(module.getConfig().getString("gui.bombers.bomber.type.active"));
         String inactive = AltairKit.colorize(module.getConfig().getString("gui.bombers.bomber.type.inactive"));
 
-        UUID clickedUUID =UUID.fromString((String) NBTUtils.value(head,BombersSelectionGUI.HEAD_KEY, String.class));
+        UUID clickedUUID =UUID.fromString((String) NBTUtils.value(head,BombersGUI.HEAD_KEY, String.class));
         boolean wasPresent = faction.getBombers().contains(clickedUUID);
         for (String line : meta.getLore()) {
             if (wasPresent){

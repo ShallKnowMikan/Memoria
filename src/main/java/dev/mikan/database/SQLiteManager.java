@@ -64,6 +64,28 @@ public class SQLiteManager {
         return CompletableFuture.supplyAsync(() -> update(query, objects), executor);
     }
 
+    public CompletableFuture<Integer> updateAsyncWithId(String query, Object... objects) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection connection = pool.getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+                bindParameters(preparedStatement, objects);
+                preparedStatement.executeUpdate();
+
+                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+                return -1;
+            } catch (SQLException e) {
+                logger.error("Failed to execute update.", e);
+                return -1;
+            }
+        }, executor);
+    }
+
+
     public CachedRowSet query(String query, Object... objects) {
         try (Connection connection = pool.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {

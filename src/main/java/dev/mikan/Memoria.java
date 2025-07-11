@@ -14,9 +14,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Memoria {
 
@@ -26,8 +26,8 @@ public class Memoria {
     private @Getter FileConfiguration lang;
     private @Getter FileConfiguration general;
 
-    private @Getter final Map<Class<? extends Module>,Module> modules = new ConcurrentHashMap<>();
-    private @Getter final Map<String,Class<? extends Module>> moduleNames = new ConcurrentHashMap<>();
+    private @Getter final Map<Class<? extends Module>,Module> modules = new LinkedHashMap<>();
+    private @Getter final Map<String,Class<? extends Module>> moduleNames = new LinkedHashMap<>();
 
     public Memoria(Bootstrap bootstrap) {
 
@@ -41,7 +41,7 @@ public class Memoria {
         moduleNames.put("faction", FactionModule.class);
 
         modules.put(CoreModule.class,Singleton.getInstance(CoreModule.class,() -> new CoreModule(this,"Core", logger)));
-        moduleNames.put("core", FactionModule.class);
+        moduleNames.put("core", CoreModule.class);
 
         modules.put(RegenblockModule.class,Singleton.getInstance(RegenblockModule.class,() -> new RegenblockModule(this,"RegenBlock",logger)));
         moduleNames.put("regenblock",RegenblockModule.class);

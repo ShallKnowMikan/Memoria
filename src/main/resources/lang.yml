@@ -17,3 +17,28 @@ factions:
   on_raid_interfere_prohibition: "&cNon puoi interferire con i raid!"
   on_bombers_cmd_prohibition: "&7Non hai abbastanza permessi per aprire quest'interfaccia."
   on_raid_attempt_without_bombers_prohibition: "Non puoi dichiarare un raid senza dichiarare prima almeno un bomber."
+  on_raid_stop_command_successful: "&7Raid terminato con successo."
+cores:
+  on_command:
+    core_get: '&7Hai ricevuto un core.'
+  on_place:
+    prohibition:
+      invalid_location: "&7Non puoi piazzare il core qui."
+      while_in_no_faction: '&7Non puoi piazzare il core se non fai parte di una fazione.'
+      core_already_placed: "&7Non puoi avere piu' di un core piazzato allo stesso momento."
+    success: '&7Core creato con successo.'
+  on_level_up:
+    success: "&7Complimenti! il tuo coree' salito al livello: %level%."
+    failure: "&7Non hai abbastanza soldi per livellare il core."
+    prohibition:
+      while_under_raid: "&7Non puoi livellare il tuo core se stai essendo raidato."
+  on_unclaim:
+    when_core_land: "&7Non puoi unclaimare questa terra, rimuovi il core prima."
+  on_unclaim_all:
+    having_core: "&7Non puoi unclaimare tutte le terre, rimuovi il core prima."
+  on_remove:
+    when_inventory_is_full: "&7Inventario pieno, riprova."
+    success: "&7Core rimosso con successo."
+  on_raid:
+    prohibition:
+      open_gui: "&7Non puoi aprire l'interfaccia del core quando sei sotto raid."

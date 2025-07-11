@@ -7,6 +7,8 @@ softdepend:
   - DecentHolograms
   - MagicSpells
   - ProtocolLib
+  - Vault
+  - PacketEvents
   - ProtocolSupport
   - ViaVersion
   - ViaBackwards
